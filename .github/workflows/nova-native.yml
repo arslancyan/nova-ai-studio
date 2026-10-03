@@ -54,6 +54,9 @@ jobs:
       - name: NOVA Micro prompt-to-video regression
         run: python -m engine.micro_generation_test
 
+      - name: Native prompt conditioning regression
+        run: python -m engine.prompt_conditioning_test
+
       - name: Latent model smoke test
         run: python -m engine.latent_smoke_test
 

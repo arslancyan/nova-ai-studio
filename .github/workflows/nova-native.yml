@@ -30,6 +30,15 @@ jobs:
       - name: Native autoencoder learning regression
         run: python -m engine.autoencoder_learning_test
 
+      - name: Tiny native training profile
+        run: python -m engine.ci_training_profile
+
+      - name: Upload tiny native checkpoint
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-native-ci-checkpoint
+          path: checkpoints/ci_nova_ae.pt
+
       - name: Latent model smoke test
         run: python -m engine.latent_smoke_test
 

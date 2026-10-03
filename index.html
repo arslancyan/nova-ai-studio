@@ -27,9 +27,12 @@ footer{padding:35px 6%;border-top:1px solid var(--line);color:var(--muted);displ
 <div class="row"><div><label class="label">Model</label><select id="model" class="select"><option>NOVA Cinematic</option><option>NOVA Fast</option><option>NOVA Anime</option><option>NOVA Product</option></select></div><div><label class="label">Duration</label><select id="duration" class="select"><option>5 seconds</option><option>10 seconds</option><option>15 seconds</option></select></div></div>
 <div class="row"><div><label class="label">Aspect</label><select id="aspect" class="select"><option>16:9 — Landscape</option><option>9:16 — Vertical</option><option>1:1 — Square</option></select></div><div><label class="label">Camera</label><select id="camera" class="select"><option>Auto Director</option><option>Slow Dolly</option><option>Handheld</option><option>Orbit</option><option>Crane Up</option></select></div></div>
 <div class="row"><div><label class="label">Reference</label><select id="reference" class="select"><option>No reference</option><option>Character reference</option><option>Style reference</option><option>Image-to-video</option></select></div><div><label class="label">Quality</label><select id="quality" class="select"><option>Draft</option><option>Standard</option><option>High</option></select></div></div>
-<button class="generate" onclick="generate()">Generate Video</button><div id="status" class="status"></div>
+<button class="generate" onclick="generate()">Generate Video</button>
+<button class="btn" style="width:100%;margin-top:10px" onclick="generateImage()">Generate Image</button>
+<div id="status" class="status"></div>
 </div>
-<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Generation Preview</h2><span id="jobState" class="tag">READY</span></div><div class="preview"><div class="orb"></div><video id="videoPreview" controls playsinline style="display:none;width:100%;height:100%;object-fit:contain;background:#05070a"></video><div class="preview-text" id="previewText">Your generated video<br>will appear here.</div></div><div style="display:flex;gap:8px;margin-top:12px"><button class="btn" style="flex:1" onclick="downloadDemo()">Export</button><button class="btn" style="flex:1" onclick="newProject()">New Project</button></div></div>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Generation Preview</h2><span id="jobState" class="tag">READY</span></div><div class="preview"><div class="orb"></div><video id="videoPreview" controls playsinline style="display:none;width:100%;height:100%;object-fit:contain;background:#05070a"></video>
+<img id="imagePreview" alt="NOVA generated image" style="display:none;width:100%;height:100%;object-fit:contain;background:#05070a"><div class="preview-text" id="previewText">Your generated video<br>will appear here.</div></div><div style="display:flex;gap:8px;margin-top:12px"><button class="btn" style="flex:1" onclick="downloadDemo()">Export</button><button class="btn" style="flex:1" onclick="newProject()">New Project</button></div></div>
 </section>
 <section id="projects" style="margin-top:35px"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="eyebrow">WORKSPACE</div><h2 style="margin:8px 0 0">Project History</h2></div><button class="btn" onclick="newProject()">+ New Project</button></div><div id="projectList" style="margin-top:18px"></div></div></section>
 <section id="features" class="features"><div class="feature"><b>Character Lock</b><span>Keep characters consistent across scenes and generations.</span></div><div class="feature"><b>Director Mode</b><span>Control camera, lens, movement, lighting and shot language.</span></div><div class="feature"><b>Storyboard</b><span>Turn one concept into a multi-shot sequence before rendering.</span></div><div class="feature"><b>Social Export</b><span>Prepare landscape, vertical and square versions from one project.</span></div></section>
@@ -152,6 +155,44 @@ async function generate(){
     t.innerHTML='<b>RENDER ERROR</b><br><br>'+escapeHtml(String(error.message||error));
   }finally{
     generating=false; button.disabled=false; button.textContent='Generate Video'; sync();
+  }
+}
+async function generateImage(){
+  if(generating)return;
+  const p=document.getElementById('prompt').value.trim();
+  if(!p){alert('Add a prompt first.');return}
+  const base=apiBase();
+  if(!base){
+    document.getElementById('status').style.display='block';
+    document.getElementById('status').textContent='Image demo mode · connect a NOVA backend for image output';
+    document.getElementById('jobState').textContent='IMAGE DEMO';
+    return;
+  }
+  generating=true;
+  const button=document.querySelector('.generate');
+  button.disabled=true;
+  document.getElementById('jobState').textContent='IMAGE';
+  document.getElementById('status').style.display='block';
+  document.getElementById('status').textContent='NOVA image generation…';
+  try{
+    const response=await fetch(base+'/v1/images',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt:p,aspect_ratio:document.getElementById('aspect').value.split(' ')[0]})
+    });
+    if(!response.ok)throw new Error('Image generation failed: HTTP '+response.status);
+    const result=await response.json();
+    const image=document.getElementById('imagePreview');
+    image.src=result.output_url&&/^https?:\/\//i.test(result.output_url)?result.output_url:base+String(result.output_url||'');
+    image.style.display='block';
+    document.getElementById('videoPreview').style.display='none';
+    document.getElementById('previewText').style.display='none';
+    document.getElementById('status').textContent='NOVA image preview ready';
+  }catch(error){
+    document.getElementById('status').textContent='Image failed · '+String(error.message||error);
+    document.getElementById('jobState').textContent='FAILED';
+  }finally{
+    generating=false;button.disabled=false;sync();
   }
 }
 function activateAdmin(){

@@ -10,6 +10,8 @@ CPU CI validates the complete native path at tiny scale:
 2. Train a small native 3D autoencoder.
 3. Train a tiny native latent denoiser.
 4. Run native text-conditioned latent sampling.
+5. Exercise the real-video ingestion path with CI-generated media.
+6. Validate documented train/validation splits and provenance fields.
 5. Decode the latent result through the native autoencoder.
 6. Validate the resulting video tensor.
 7. Export the tensor to MP4.
@@ -25,6 +27,8 @@ When GPU compute becomes available, the same checkpoints can be resumed and the 
 - larger latent denoiser width/depth
 - longer diffusion schedules
 - real video data with documented ML-training rights
+- prepared real-video train/validation CSVs can now feed the same native latent trainer
+- real-video autoencoder training is reproducible and resumable
 - longer clips and higher resolution
 - image/reference conditioning
 - temporal refinement and upscaling

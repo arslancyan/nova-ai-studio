@@ -1,0 +1,27 @@
+name: NOVA Code Check
+on:
+  push:
+    paths:
+      - "engine/**"
+      - "server/**"
+      - ".github/workflows/nova-code-check.yml"
+  pull_request:
+    paths:
+      - "engine/**"
+      - "server/**"
+      - ".github/workflows/nova-code-check.yml"
+  workflow_dispatch:
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install API dependencies
+        run: pip install -r server/requirements.txt
+      - name: Compile Python modules
+        run: python -m compileall -q engine server
+      - name: Import API
+        run: python -c "from server.app import app; print(app.title, app.version)"

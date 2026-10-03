@@ -18,7 +18,15 @@ def run_job(job: dict, output_mp4: str) -> Path:
     root.parent.mkdir(parents=True, exist_ok=True)
     tensor_path = root.with_suffix(".pt")
     generate_job(job, output=str(tensor_path))
-    fps = int(job.get("fps", 8))
+
+    requested_duration = max(1, int(job.get("duration_seconds", 5)))
+    generated_frames = int(job.get("frames", 16))
+    requested_fps = job.get("fps")
+    if requested_fps is None:
+        fps = max(1, round(generated_frames / requested_duration))
+    else:
+        fps = max(1, int(requested_fps))
+
     export_video(str(tensor_path), str(root), fps=fps)
     return root
 

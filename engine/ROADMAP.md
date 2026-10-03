@@ -59,11 +59,18 @@
 - [x] Creator-owned latent prompt-conditioning regression
 - [ ] Production-quality sample generation from a trained checkpoint
 - [x] Native tensor-to-MP4 export boundary
+- [x] Creator-16F Base / Large / 24F staged capacity profiles
+- [x] Source-balanced latent training
+- [x] Continuity context conditioning and deterministic Shot DNA
+- [x] Native preflight quality gate
 
 ## Stage 3 — Improve the architecture
 - [x] Factorized spatial/temporal attention
 - [x] Learned positional encoding
 - [ ] Dynamic positional encoding
+- [x] Continuity-aware prompt context
+- [ ] Learned reference-image conditioning
+- [ ] Temporal interpolation for longer native outputs
 - [x] Efficient attention
 - [x] Stronger text conditioning
 - [x] Better sampling / scheduler comparison (DDIM-style deterministic path added)
@@ -77,11 +84,20 @@
 - [ ] Admin unlimited credits
 - [ ] User credit accounting
 - [ ] Safety and abuse controls
+- [x] Generation preflight endpoint
+- [ ] Persistent multi-user job queue
 
 
 ## Compute simplification
 - [x] Separate CPU Micro research profile from GPU Scale profile
 - [x] Make GPU a quality/scaling accelerator rather than a prerequisite for every engineering step
+
+## Product differentiation track
+- [x] Continuity Graph: project-level shot nodes and locked creative elements
+- [x] Shot DNA fingerprint for deterministic creative-state addressing
+- [x] Preflight gate before generation
+- [ ] Reference-aware identity embeddings
+- [ ] Native scene-to-scene latent continuation
 
 ## 60-Day execution target
 - [x] Days 1–15 foundation: native representation learning, deterministic tests, real-video ingestion and provenance gates

@@ -1,5 +1,7 @@
 # NOVA — AI Video Studio
 
+**Current release: v0.4 — API + native-engine foundation**
+
 NOVA is an independent AI-video product prototype.
 
 ## v0.1
@@ -12,6 +14,12 @@ NOVA is an independent AI-video product prototype.
 
 ## Product direction
 The long-term goal is a proprietary AI-video stack. Third-party/open-source components may be used only when their licenses and terms permit commercial use. NOVA must not copy or extract proprietary model weights, APIs, or training data from another provider.
+
+## v0.4 additions
+- Backend job API contract in `server/`
+- Development job lifecycle: queued / rendering / complete / failed
+- Dataset provenance manifest validator
+- Clear separation between static GitHub Pages UI and future GPU backend
 
 ## Next engineering milestones
 1. Authentication + projects

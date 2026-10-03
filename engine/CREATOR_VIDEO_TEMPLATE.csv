@@ -1,0 +1,2 @@
+sample_id,video_path,creator,ownership,permission,media_category,caption,notes
+creator-001,/absolute/path/to/video.mp4,YOUR_NAME,creator-owned,self-created and owned,animation,"short description of the video","original work by the creator"

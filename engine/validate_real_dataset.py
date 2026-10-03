@@ -30,7 +30,7 @@ def read_csv(path: Path):
     return rows
 
 
-def validate(root="data/real"):
+def validate(root="data/real", require_rights_verified=False):
     root = Path(root)
     metadata = read_csv(root / "metadata.csv")
     train = read_csv(root / "train.csv")
@@ -53,6 +53,11 @@ def validate(root="data/real"):
         raise ValueError("train/val split overlap detected")
     if not train_ids <= metadata_ids or not val_ids <= metadata_ids:
         raise ValueError("split contains unknown sample_id")
+
+    if require_rights_verified:
+        for row in metadata:
+            if row.get("training_rights_verified", "").strip().lower() != "true":
+                raise ValueError(f"{row.get('sample_id', '<unknown>')}: training_rights_verified must be true")
 
     for row in metadata:
         for field in REQUIRED:
@@ -79,5 +84,6 @@ def validate(root="data/real"):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default="data/real")
+    parser.add_argument("--require-rights-verified", action="store_true")
     args = parser.parse_args()
-    validate(args.root)
+    validate(args.root, require_rights_verified=args.require_rights_verified)

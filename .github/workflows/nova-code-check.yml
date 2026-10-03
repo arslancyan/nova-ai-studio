@@ -45,6 +45,32 @@ jobs:
         run: python -m engine.train_autoencoder --root /tmp/nova-synthetic --epochs 1 --batch-size 4 --out /tmp/nova-ae.pt
       - name: Evaluate native autoencoder checkpoint
         run: python -m engine.evaluate_autoencoder --root /tmp/nova-synthetic --checkpoint /tmp/nova-ae.pt --batch-size 4
+      - name: Train tiny native latent profile
+        run: >-
+          python -m engine.train_latent
+          --data-root /tmp/nova-synthetic
+          --autoencoder-checkpoint /tmp/nova-ae.pt
+          --epochs 1
+          --batch-size 4
+          --out /tmp/nova-latent.pt
+          --model-dim 32
+          --num-heads 4
+          --num-layers 1
+          --diffusion-steps 8
+      - name: Run native end-to-end inference smoke test
+        run: >-
+          python -m engine.latent_inference
+          --autoencoder /tmp/nova-ae.pt
+          --latent /tmp/nova-latent.pt
+          --prompt "a red circle moving in a dark scene"
+          --frames 8
+          --height 32
+          --width 32
+          --output /tmp/nova-native.pt
+          --seed 0
+      - name: Validate native inference tensor
+        run: >-
+          python -c "import torch; x=torch.load('/tmp/nova-native.pt', weights_only=True); assert x.shape == (1,3,8,32,32); assert torch.isfinite(x).all(); print('native tensor OK', tuple(x.shape))"
       - name: Compile native exporter
         run: python -m compileall -q engine/export_video.py
       - name: Run native video exporter smoke test

@@ -18,6 +18,7 @@
 - [x] Autoencoder architecture smoke test
 - [ ] Train first synthetic reconstruction checkpoint (GPU quality run)
 - [ ] Benchmark first rights-safe real-video reconstruction checkpoint
+- [x] Run first local creator-owned reconstruction benchmark (4 creator-owned clips; 3 animation + 1 live-action)
 - [x] Tiny CPU training profile for end-to-end native pipeline validation
 - [x] CI executes a tiny random-init training profile and preserves its checkpoint artifact
 - [x] CPU-first NOVA Micro profile (AE + latent diffusion)

@@ -10,7 +10,13 @@
 - [x] Inference entry point
 - [x] Synthetic smoke test
 
-## Stage 1 — Data
+## Stage 1 — Native representation learning
+- [x] Random-init 3D video autoencoder
+- [x] Rights-safe synthetic dataset generator
+- [x] Autoencoder training entry point
+- [ ] Train first synthetic reconstruction checkpoint
+
+## Stage 1B — Data
 - [ ] Establish a small, documented dataset
 - [ ] Validate every source license/permission
 - [ ] Normalize clips
@@ -18,7 +24,7 @@
 - [ ] Train/validation split
 - [ ] Dataset checksum manifest
 
-## Stage 2 — NOVA-0 training
+## Stage 2 — NOVA latent diffusion training
 - [ ] First real checkpoint
 - [ ] Loss curves
 - [ ] Reproducible seed

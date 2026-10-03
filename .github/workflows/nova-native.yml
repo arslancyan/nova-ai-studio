@@ -1,0 +1,43 @@
+name: NOVA Native CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  native-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch pillow
+
+      - name: Check FFmpeg
+        run: ffmpeg -version
+
+      - name: Synthetic dataset validation
+        run: python -m engine.validate_synthetic
+
+      - name: Native autoencoder smoke test
+        run: python -m engine.autoencoder_smoke_test
+
+      - name: Native autoencoder learning regression
+        run: python -m engine.autoencoder_learning_test
+
+      - name: Latent model smoke test
+        run: python -m engine.latent_smoke_test
+
+      - name: Latent learning regression
+        run: python -m engine.latent_learning_test
+
+      - name: Video export smoke test
+        run: python -m engine.export_video_smoke_test
+
+      - name: Rights-safe real-video pipeline smoke test
+        run: python -m engine.real_video_prepare_smoke_test

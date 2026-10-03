@@ -1,6 +1,6 @@
 # NOVA — AI Video Studio
 
-**Current release: v0.9 — staged native capacity + creator-owned dataset strengthening**
+**Current release: v0.9.1 — native scaling, continuity engine, and dataset quality gates**
 
 NOVA is an independent AI-video product prototype.
 
@@ -18,6 +18,10 @@ The long-term goal is a proprietary AI-video stack. Third-party/open-source comp
 - Native API defaults aligned to the 16-frame / 64×64 creator bridge profile
 - Native export timing now follows requested duration unless an explicit FPS override is supplied
 - Capacity profile regression tests added to native CI
+- NOVA Continuity Graph with locked creative elements and deterministic Shot DNA
+- Preflight validation before backend generation
+- Creator dataset quality gate for provenance, source diversity and window concentration
+- Native defaults fixed at the Creator-16F 16-frame / 64×64 bridge
 
 Small CPU checkpoints remain engineering/regression artifacts, not production-quality video generators.
 

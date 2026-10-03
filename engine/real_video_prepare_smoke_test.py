@@ -61,6 +61,14 @@ def main():
         prepare(metadata, output, frames=8, height=64, width=64, val_fraction=0.5, seed=0)
         validate(output)
 
+        # Also exercise the real-dataset checksum path without asserting legal rights.
+        from .dataset_manifest import build_manifest
+        build_manifest(
+            str(output),
+            str(output / "manifest.json"),
+            "CI-generated media only; no external rights claim.",
+        )
+
         tensor = torch.load(output / "clips" / "smoke-001.pt", map_location="cpu", weights_only=True)
         left = tensor[:, :4].mean(dim=(0, 2, 3))
         right = tensor[:, 4:].mean(dim=(0, 2, 3))

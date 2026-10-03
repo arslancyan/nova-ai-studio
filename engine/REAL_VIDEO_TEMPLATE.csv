@@ -1,1 +1,1 @@
-sample_id,source_id,video_path,creator,license_or_permission,source_url,acquired_at,permitted_use,attribution_required,caption,notes
+sample_id,source_id,video_path,creator,ownership,permission,license_or_permission,source_url,acquired_at,permitted_use,attribution_required,training_rights_verified,media_category,caption,notes

@@ -13,7 +13,7 @@ from .tokenizer import encode, vocab_size
 @torch.no_grad()
 def generate(checkpoint, prompt, output="nova_sample.pt"):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    pack = torch.load(checkpoint, map_location=device)
+    pack = torch.load(checkpoint, map_location=device, weights_only=True)
     cfg = NovaConfig(**pack["config"])
     model = build_model(cfg).to(device)
     model.load_state_dict(pack["state_dict"])

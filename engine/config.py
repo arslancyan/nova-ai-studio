@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 @dataclass
 class NovaConfig:
-    vocab_size: int = 96
+    vocab_size: int = 97
     text_dim: int = 128
     model_dim: int = 128
     num_heads: int = 4

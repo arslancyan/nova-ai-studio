@@ -134,8 +134,9 @@ async function waitForJob(base,id,statusEl,stateEl){
     const job=await response.json();
     const state=String(job.state||'unknown').toLowerCase();
     const elapsed=Math.max(1,Math.round((Date.now()-started)/1000));
-    let percent=state==='queued'?8:state==='rendering'?Math.min(86,18+Math.round(i*.8)):state==='complete'?100:92;
-    let stage=state==='queued'?'Queued · preparing job':state==='rendering'?'Rendering · NOVA backend':state==='complete'?'Complete · output ready':'Finalizing · packaging output';
+    const percent=Number.isFinite(Number(job.progress))?Number(job.progress):(state==='queued'?8:state==='rendering'?Math.min(86,18+Math.round(i*.8)):state==='complete'?100:92);
+    const stageMap={queued:'Queued · preparing job',rendering:'Rendering · NOVA backend',complete:'Complete · output ready',failed:'Failed'};
+    const stage=job.stage&&stageMap[state]?stageMap[state]:(state==='queued'?'Queued · preparing job':state==='rendering'?'Rendering · NOVA backend':state==='complete'?'Complete · output ready':'Finalizing · packaging output');
     setProgress(percent,stage,state==='rendering'?'Stage-based estimate from polling — backend does not currently expose native progress.':'');
     stateEl.textContent=state.toUpperCase();
     if(state==='complete'){setProgress(100,'Complete · output ready','MP4 is ready for preview and export.');return job}

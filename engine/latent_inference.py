@@ -23,9 +23,9 @@ def generate(
     latent_checkpoint,
     prompt,
     output="nova_latent_sample.pt",
-    frames=8,
-    height=32,
-    width=32,
+    frames=16,
+    height=64,
+    width=64,
     timesteps=1000,
     seed=0,
     sampler="ddpm",
@@ -137,10 +137,26 @@ def build_native_prompt(job: dict) -> str:
         f"{label}: {value.strip()}" for label, value in parts
         if isinstance(value, str) and value.strip()
     )
+    continuity = job.get("continuity") or {}
+    continuity_parts = []
+    if continuity.get("enabled", True):
+        cid = str(continuity.get("continuity_id", "")).strip()
+        shot = continuity.get("shot_index", 1)
+        context = str(continuity.get("context", "")).strip()
+        locked = continuity.get("locked_elements") or []
+        if cid:
+            continuity_parts.append(f"Continuity ID: {cid}")
+        continuity_parts.append(f"Shot index: {shot}")
+        if context:
+            continuity_parts.append(f"Continuity context: {context}")
+        if locked:
+            continuity_parts.append("Locked elements: " + ", ".join(str(x).strip() for x in locked if str(x).strip()))
+    continuity_text = ". ".join(x for x in continuity_parts if x)
     prompt = str(job.get("prompt", "")).strip()
-    if structured and prompt:
-        return f"{prompt}. {structured}."
-    return structured or prompt
+    sections = ". ".join(x for x in [structured, continuity_text] if x)
+    if sections and prompt:
+        return f"{prompt}. {sections}."
+    return sections or prompt
 
 
 @torch.no_grad()
@@ -151,8 +167,8 @@ def generate_job(job: dict, output="outputs/nova_native.pt"):
         raise ValueError("job prompt or director fields are required")
 
     duration = int(job.get("duration_seconds", 5))
-    # The current native prototype operates on a compact 8-frame clip.
-    frames = int(job.get("frames", 8))
+    # Creator-16F is the current native bridge profile; larger shapes require matching checkpoints.
+    frames = int(job.get("frames", 16))
     if duration <= 0:
         raise ValueError("duration_seconds must be positive")
 

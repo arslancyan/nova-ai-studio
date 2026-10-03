@@ -80,7 +80,7 @@
 </div>
 <div id="adminModal" class="admin"><div class="card"><div style="display:flex;justify-content:space-between"><h2>Administrator Console</h2><button class="btn" onclick="closeAdmin()">×</button></div><p style="color:var(--muted)">Prototype-only administrator controls. Real authentication and unlimited generation must be enforced by the future backend.</p><label class="label">Demo admin access code</label><input id="adminCode" class="select" placeholder="Enter demo code"><button class="generate" style="width:100%;padding:12px;margin-top:8px" onclick="activateAdmin()">Activate Admin Demo</button><label class="label" style="margin-top:16px">Backend API URL</label><input id="apiBase" class="select" placeholder="https://your-nova-api.example.com"><button class="btn" style="width:100%;margin-top:10px" onclick="saveApiBase()">Save Backend Connection</button><div id="adminState" style="margin-top:12px;color:var(--muted)"></div></div></div>
 <script>
-const DEFAULT_CREDITS=100;
+const DEFAULT_CREDITS=999;
 let credits=readNumber('novaCredits',DEFAULT_CREDITS);
 let admin=localStorage.getItem('novaAdmin')==='1';
 let projects=readProjects();

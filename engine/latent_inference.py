@@ -105,6 +105,56 @@ def generate(
     return output_path
 
 
+def build_native_prompt(job: dict) -> str:
+    """Flatten a Creative Director job into the conditioning text used by NOVA."""
+    director = job.get("director") or {}
+    parts = [
+        ("Subject", director.get("subject", "")),
+        ("Action", director.get("action", "")),
+        ("Environment", director.get("environment", "")),
+        ("Camera", director.get("camera_movement") or job.get("camera", "auto")),
+        ("Lighting", director.get("lighting", "")),
+        ("Style", director.get("style", "")),
+        ("Motion", director.get("motion", "natural")),
+    ]
+    structured = ". ".join(
+        f"{label}: {value.strip()}" for label, value in parts
+        if isinstance(value, str) and value.strip()
+    )
+    prompt = str(job.get("prompt", "")).strip()
+    if structured and prompt:
+        return f"{prompt}. {structured}."
+    return structured or prompt
+
+
+@torch.no_grad()
+def generate_job(job: dict, output="outputs/nova_native.pt"):
+    """Run a validated Creative Director job through the native latent pipeline."""
+    prompt = build_native_prompt(job)
+    if not prompt:
+        raise ValueError("job prompt or director fields are required")
+
+    duration = int(job.get("duration_seconds", 5))
+    # The current native prototype operates on a compact 8-frame clip.
+    frames = int(job.get("frames", 8))
+    if duration <= 0:
+        raise ValueError("duration_seconds must be positive")
+
+    seed = job.get("seed")
+    seed = int(seed) if seed is not None else 0
+    return generate(
+        job.get("autoencoder_checkpoint", "checkpoints/nova_ae.pt"),
+        job.get("latent_checkpoint", "checkpoints/nova_latent.pt"),
+        prompt,
+        output=output,
+        frames=frames,
+        height=int(job.get("height", 32)),
+        width=int(job.get("width", 32)),
+        timesteps=int(job.get("timesteps", 1000)),
+        seed=seed,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--autoencoder", default="checkpoints/nova_ae.pt")

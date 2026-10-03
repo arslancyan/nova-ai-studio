@@ -16,10 +16,13 @@ jobs:
       - name: Install runtime dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install torch pillow
+          python -m pip install torch pillow fastapi pydantic httpx pytest
 
       - name: Check FFmpeg
         run: ffmpeg -version
+
+      - name: API contract tests
+        run: pytest -q server/test_app.py
 
       - name: Synthetic dataset validation
         run: python -m engine.validate_synthetic

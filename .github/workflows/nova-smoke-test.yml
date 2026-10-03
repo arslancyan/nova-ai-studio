@@ -1,0 +1,19 @@
+name: NOVA Engine Smoke Test
+on:
+  push:
+    paths:
+      - "engine/**"
+      - ".github/workflows/nova-smoke-test.yml"
+  workflow_dispatch:
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install engine dependencies
+        run: pip install -r engine/requirements.txt
+      - name: Run architecture smoke test
+        run: python -m engine.smoke_test

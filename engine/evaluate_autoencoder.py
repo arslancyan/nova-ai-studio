@@ -55,11 +55,21 @@ def evaluate(
     mse = total_mse / max(1, batches)
     psnr = float("inf") if mse == 0 else -10.0 * torch.log10(torch.tensor(mse)).item()
 
+    result = {
+        "checkpoint": str(checkpoint),
+        "seed": seed,
+        "val_fraction": val_fraction,
+        "samples": len(val_set),
+        "l1": l1,
+        "mse": mse,
+        "psnr_db": psnr,
+    }
     print(
+        f"validation_samples={len(val_set)} "
         f"validation_l1={l1:.6f} validation_mse={mse:.6f} "
         f"validation_psnr={psnr:.3f}dB"
     )
-    return {"l1": l1, "mse": mse, "psnr_db": psnr}
+    return result
 
 
 if __name__ == "__main__":

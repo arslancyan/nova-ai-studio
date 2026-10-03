@@ -11,7 +11,8 @@ def test_health_reports_native_state():
     assert response.status_code == 200
     data = response.json()
     assert data["ok"] is True
-    assert data["job_schema"] == "0.8"
+    assert data["job_schema"] == "0.9"
+    assert data["native_profile"] == "creator-16f-base"
     assert "native_ready" in data
 
 
@@ -38,6 +39,9 @@ def test_job_contract_accepts_director_and_sampler():
     data = response.json()
     assert data["request"]["sampler"] == "ddim"
     assert data["request"]["sampling_steps"] == 20
+    assert data["request"]["frames"] == 16
+    assert data["request"]["height"] == 64
+    assert data["request"]["width"] == 64
     assert data["progress"] == 5
     assert data["stage"] == "queued"
 

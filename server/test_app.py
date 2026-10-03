@@ -1,0 +1,50 @@
+"""Fast API contract tests for the NOVA backend."""
+from fastapi.testclient import TestClient
+
+from server.app import app
+
+client = TestClient(app)
+
+
+def test_health_reports_native_state():
+    response = client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert data["job_schema"] == "0.8"
+    assert "native_ready" in data
+
+
+def test_job_contract_accepts_director_and_sampler():
+    response = client.post(
+        "/v1/jobs",
+        json={
+            "prompt": "A red circle moving through a blue room",
+            "project_name": "Contract test",
+            "sampler": "ddim",
+            "sampling_steps": 20,
+            "director": {
+                "subject": "red circle",
+                "action": "moves forward",
+                "environment": "blue room",
+                "camera_movement": "dolly in",
+                "lighting": "soft",
+                "style": "cinematic",
+                "motion": "natural",
+            },
+        },
+    )
+    assert response.status_code == 202
+    data = response.json()
+    assert data["request"]["sampler"] == "ddim"
+    assert data["request"]["sampling_steps"] == 20
+    assert data["progress"] == 5
+    assert data["stage"] == "queued"
+
+
+def test_invalid_sampler_is_rejected():
+    response = client.post(
+        "/v1/jobs",
+        json={"prompt": "test", "sampler": "invalid"},
+    )
+    assert response.status_code == 422

@@ -23,7 +23,7 @@ from .renderer import render_image, render_preview
 NATIVE_ENABLED = os.getenv("NOVA_NATIVE_ENABLED", "0").lower() in {"1", "true", "yes"}
 NATIVE_AE_CHECKPOINT = os.getenv("NOVA_AE_CHECKPOINT", "checkpoints/nova_ae.pt")
 NATIVE_LATENT_CHECKPOINT = os.getenv("NOVA_LATENT_CHECKPOINT", "checkpoints/nova_latent.pt")
-NATIVE_FPS = max(1, int(os.getenv("NOVA_NATIVE_FPS", "8")))
+NATIVE_FPS = os.getenv("NOVA_NATIVE_FPS")
 NATIVE_PROFILE = os.getenv("NOVA_NATIVE_PROFILE", "creator-16f-base")
 
 VERSION = "0.9.0"
@@ -116,7 +116,8 @@ def _render_job(job_id: str, request: JobCreate) -> None:
             native_job = request.model_dump()
             native_job["autoencoder_checkpoint"] = NATIVE_AE_CHECKPOINT
             native_job["latent_checkpoint"] = NATIVE_LATENT_CHECKPOINT
-            native_job["fps"] = NATIVE_FPS
+            if NATIVE_FPS:
+                native_job["fps"] = max(1, int(NATIVE_FPS))
             native_job["native_profile"] = NATIVE_PROFILE
             run_job(native_job, str(output))
         else:

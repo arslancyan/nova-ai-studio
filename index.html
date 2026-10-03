@@ -256,6 +256,21 @@ function downloadDemo(){
   const a=document.createElement('a'); a.href=currentOutput; a.download='nova-render.mp4'; a.target='_blank'; a.click();
 }
 function escapeHtml(x){return String(x).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+function go(id){
+  const el=document.getElementById(id);
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  if(window.innerWidth<=760)document.getElementById('sidebar').classList.remove('mobile-open');
+}
+function toggleSidebar(){
+  const side=document.getElementById('sidebar');
+  if(window.innerWidth<=760)side.classList.toggle('mobile-open');
+  else side.classList.toggle('collapsed');
+}
+function mobileSidebar(){
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+}
+
 sync();
 </script>
 </body></html>

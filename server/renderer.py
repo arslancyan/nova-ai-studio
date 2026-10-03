@@ -32,11 +32,11 @@ def _wrap(draw, text, font, max_width):
     if line: lines.append(line)
     return lines[:5]
 
-def render_preview(job_id: str, prompt: str, duration_seconds: int, aspect_ratio: str = "16:9", camera: str = "auto") -> str:
+def render_preview(job_id: str, prompt: str, duration_seconds: int, aspect_ratio: str = "16:9", camera: str = "auto", seed: int | None = None) -> str:
     duration = max(1, min(int(duration_seconds), MAX_RENDER_SECONDS))
     width, height = WIDTHS.get(aspect_ratio, WIDTHS["16:9"])
     frame_count = duration * FPS
-    seed = int(hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:8], 16)
+    seed = int(seed) if seed is not None else int(hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:8], 16)
     accent = (150 + seed % 90, 220, 70)
     workdir = Path(tempfile.mkdtemp(prefix=f"nova-{job_id}-"))
     output = OUTPUT_DIR / f"{job_id}.mp4"

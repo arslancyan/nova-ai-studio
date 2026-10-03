@@ -40,17 +40,82 @@ footer{padding:35px 6%;border-top:1px solid var(--line);color:var(--muted);displ
 </div></section>
 </main>
 <div id="adminModal" style="display:none;position:fixed;inset:0;background:#000b;z-index:20;align-items:center;justify-content:center;padding:20px"><div class="card" style="width:min(520px,100%)"><div style="display:flex;justify-content:space-between"><h2>Administrator Console</h2><button class="btn" onclick="closeAdmin()">×</button></div><p style="color:var(--muted)">Prototype-only administrator controls. Real authentication and unlimited generation must be enforced by the future backend.</p><label class="label">Demo admin access code</label><input id="adminCode" class="select" placeholder="Enter demo code"><button class="generate" onclick="activateAdmin()">Activate Admin Demo</button><div id="adminState" style="margin-top:12px;color:var(--muted)"></div></div></div>
-<footer><span>NOVA © 2026 — Independent AI Video Studio</span><span>v0.3 · Prototype · 35% Founder Discount</span></footer>
+<footer><span>NOVA © 2026 — Independent AI Video Studio</span><span>v0.4 · Prototype · 35% Founder Discount</span></footer>
 <script>
-let credits=Number(localStorage.getItem('novaCredits')||100), admin=localStorage.getItem('novaAdmin')==='1', projects=JSON.parse(localStorage.getItem('novaProjects')||'[]');
-function sync(){document.getElementById('creditBadge').textContent=admin?'UNLIMITED · ADMIN':credits+' credits';renderProjects();}
-function generate(){const p=document.getElementById('prompt').value.trim();if(!p){alert('Add a prompt first.');return}if(!admin&&credits<1){alert('No credits remaining.');return}if(!admin){credits--;localStorage.setItem('novaCredits',credits)}const s=document.getElementById('status'),state=document.getElementById('jobState'),t=document.getElementById('previewText');s.style.display='block';s.textContent=admin?'ADMIN · Unlimited render slot queued…':'Render queued · 1 credit reserved';state.textContent='RENDERING';t.innerHTML='Building your cinematic shot…';setTimeout(()=>{state.textContent='DEMO READY';s.textContent='Demo pipeline complete · real AI engine not connected yet';t.innerHTML='<b>VIDEO PREVIEW</b><br><br>'+escapeHtml(p.slice(0,130));projects.unshift({title:p.slice(0,55),date:new Date().toLocaleString(),model:document.getElementById('model').value});projects=projects.slice(0,8);localStorage.setItem('novaProjects',JSON.stringify(projects));sync()},1000)}
-function activateAdmin(){const code=document.getElementById('adminCode').value;if(code==='NOVA-ADMIN-DEMO'){admin=true;localStorage.setItem('novaAdmin','1');document.getElementById('adminState').textContent='Admin demo active. Credits bypassed locally.';sync()}else document.getElementById('adminState').textContent='Invalid demo code.'}
-function openAdmin(){document.getElementById('adminModal').style.display='flex'}function closeAdmin(){document.getElementById('adminModal').style.display='none'}
-function newProject(){document.getElementById('prompt').value='';document.getElementById('jobState').textContent='READY';document.getElementById('previewText').innerHTML='Your generated video<br>will appear here.';document.getElementById('status').style.display='none';document.querySelector('#studio').scrollIntoView({behavior:'smooth'})}
-function renderProjects(){const el=document.getElementById('projectList');el.innerHTML=projects.length?projects.map((x,i)=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)"><div><b>'+escapeHtml(x.title)+'</b><div style="color:var(--muted);font-size:12px;margin-top:4px">'+escapeHtml(x.model)+' · '+escapeHtml(x.date)+'</div></div><span class="tag">DEMO</span></div>').join(''):'<div style="color:var(--muted);padding:20px 0">No projects yet. Your generated shots will appear here.</div>'}
+const DEFAULT_CREDITS=100;
+let credits=readNumber('novaCredits',DEFAULT_CREDITS);
+let admin=localStorage.getItem('novaAdmin')==='1';
+let projects=readProjects();
+let generating=false;
+
+function readNumber(key,fallback){
+  const value=Number(localStorage.getItem(key));
+  return Number.isFinite(value)&&value>=0?value:fallback;
+}
+function readProjects(){
+  try{
+    const value=JSON.parse(localStorage.getItem('novaProjects')||'[]');
+    return Array.isArray(value)?value.filter(x=>x&&typeof x==='object'): [];
+  }catch(e){ return []; }
+}
+function saveProjects(){localStorage.setItem('novaProjects',JSON.stringify(projects));}
+function sync(){
+  document.getElementById('creditBadge').textContent=admin?'UNLIMITED · ADMIN':credits+' credits';
+  renderProjects();
+}
+function generate(){
+  if(generating)return;
+  const p=document.getElementById('prompt').value.trim();
+  if(!p){alert('Add a prompt first.');return}
+  if(!admin&&credits<1){alert('No credits remaining.');return}
+  generating=true;
+  const button=document.querySelector('.generate');
+  button.disabled=true;
+  button.textContent='Generating…';
+  if(!admin){credits--;localStorage.setItem('novaCredits',String(credits))}
+  const s=document.getElementById('status'),state=document.getElementById('jobState'),t=document.getElementById('previewText');
+  s.style.display='block';
+  s.textContent=admin?'ADMIN · Unlimited demo render slot queued…':'Render queued · 1 credit reserved';
+  state.textContent='RENDERING';
+  t.innerHTML='Building your cinematic shot…';
+  setTimeout(()=>{
+    state.textContent='DEMO READY';
+    s.textContent='Demo pipeline complete · real AI engine not connected yet';
+    t.innerHTML='<b>VIDEO PREVIEW</b><br><br>'+escapeHtml(p.slice(0,130));
+    projects.unshift({title:p.slice(0,55),date:new Date().toLocaleString(),model:document.getElementById('model').value});
+    projects=projects.slice(0,8);
+    saveProjects();
+    generating=false;
+    button.disabled=false;
+    button.textContent='Generate Video';
+    sync();
+  },1000);
+}
+function activateAdmin(){
+  const code=document.getElementById('adminCode').value.trim();
+  if(code==='NOVA-ADMIN-DEMO'){
+    admin=true;
+    localStorage.setItem('novaAdmin','1');
+    document.getElementById('adminState').textContent='Admin demo active. Credits bypassed locally.';
+    sync();
+  }else document.getElementById('adminState').textContent='Invalid demo code.';
+}
+function openAdmin(){document.getElementById('adminModal').style.display='flex'}
+function closeAdmin(){document.getElementById('adminModal').style.display='none'}
+function newProject(){
+  if(generating)return;
+  document.getElementById('prompt').value='';
+  document.getElementById('jobState').textContent='READY';
+  document.getElementById('previewText').innerHTML='Your generated video<br>will appear here.';
+  document.getElementById('status').style.display='none';
+  document.querySelector('#studio').scrollIntoView({behavior:'smooth'});
+}
+function renderProjects(){
+  const el=document.getElementById('projectList');
+  el.innerHTML=projects.length?projects.map(x=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)"><div><b>'+escapeHtml(String(x.title||''))+'</b><div style="color:var(--muted);font-size:12px;margin-top:4px">'+escapeHtml(String(x.model||''))+' · '+escapeHtml(String(x.date||''))+'</div></div><span class="tag">DEMO</span></div>').join(''):'<div style="color:var(--muted);padding:20px 0">No projects yet. Your generated shots will appear here.</div>';
+}
 function downloadDemo(){alert('Export becomes available when a real video engine is connected.')}
-function escapeHtml(x){return x.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function escapeHtml(x){return String(x).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 sync();
 </script>
 </body></html>

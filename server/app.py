@@ -51,6 +51,14 @@ class JobState(str, Enum):
     failed = "failed"
 
 
+class ContinuitySpec(BaseModel):
+    enabled: bool = True
+    continuity_id: str = Field(default="", max_length=120)
+    shot_index: int = Field(default=1, ge=1, le=999)
+    context: str = Field(default="", max_length=3000)
+    locked_elements: list[str] = Field(default_factory=list, max_length=12)
+
+
 class DirectorSpec(BaseModel):
     subject: str = Field(default="", max_length=1000)
     action: str = Field(default="", max_length=1000)
@@ -67,6 +75,7 @@ class JobCreate(BaseModel):
     project_name: str = Field(default="Untitled NOVA project", max_length=120)
     seed: int | None = Field(default=None, ge=0, le=2**63 - 1)
     director: DirectorSpec = Field(default_factory=DirectorSpec)
+    continuity: ContinuitySpec = Field(default_factory=ContinuitySpec)
     model: str = "nova-cinematic"
     duration_seconds: int = Field(default=5, ge=1, le=60)
     aspect_ratio: str = "16:9"
@@ -168,6 +177,30 @@ def health():
             and Path(NATIVE_AE_CHECKPOINT).is_file()
             and Path(NATIVE_LATENT_CHECKPOINT).is_file()
         ),
+    }
+
+
+@app.post("/v1/preflight")
+def preflight(request: JobCreate):
+    """Validate a job before generation without consuming a render worker."""
+    warnings = []
+    errors = []
+    if len(request.prompt.strip()) < 8:
+        errors.append("Prompt is too short for a useful generation.")
+    if request.continuity.enabled and not request.continuity.continuity_id:
+        warnings.append("Continuity is enabled but no continuity_id was supplied.")
+    if request.continuity.enabled and request.continuity.shot_index > 1 and not request.continuity.context.strip():
+        warnings.append("Later continuity shots should carry continuity context.")
+    if request.sampler == "ddim" and request.sampling_steps is not None and request.sampling_steps > 100:
+        warnings.append("DDIM above 100 steps is usually unnecessary for the current research profile.")
+    if NATIVE_ENABLED:
+        if request.frames != 16 or request.height != 64 or request.width != 64:
+            errors.append("Creator-16F native profile requires 16 frames at 64×64.")
+    return {
+        "ok": not errors,
+        "errors": errors,
+        "warnings": warnings,
+        "native_profile": NATIVE_PROFILE if NATIVE_ENABLED else None,
     }
 
 

@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 
 from .renderer import render_image, render_preview
 
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 OUTPUT_DIR = Path(os.getenv("NOVA_OUTPUT_DIR", "outputs"))
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 PUBLIC_BASE_URL = os.getenv("NOVA_PUBLIC_BASE_URL", "").rstrip("/")
@@ -63,6 +63,12 @@ class JobCreate(BaseModel):
     camera: str = "auto"
     reference_mode: str = "none"
     quality: str = "draft"
+    sampler: str = Field(default="ddpm", pattern="^(ddpm|ddim)$")
+    sampling_steps: int | None = Field(default=None, ge=2, le=1000)
+    frames: int = Field(default=8, ge=4, le=64)
+    height: int = Field(default=32, ge=4, le=512)
+    width: int = Field(default=32, ge=4, le=512)
+    timesteps: int = Field(default=1000, ge=2, le=1000)
 
 class Job(BaseModel):
     id: str
@@ -107,7 +113,7 @@ def health():
         "version": VERSION,
         "renderer": "nova-render-preview",
         "native_model": "not trained",
-        "job_schema": "0.6",
+        "job_schema": "0.7",
         "director_schema": "0.1",
     }
 

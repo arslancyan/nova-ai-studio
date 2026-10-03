@@ -1,6 +1,6 @@
 # NOVA — AI Video Studio
 
-**Current release: v0.6 — live MP4 render pipeline + native-engine foundation + $NVAI utility design**
+**Current release: v0.8 — native inference adapter + creator-engine foundation + $NVAI utility design**
 
 NOVA is an independent AI-video product prototype.
 
@@ -24,6 +24,13 @@ The long-term goal is a proprietary AI-video stack. Third-party/open-source comp
 - Docker backend with ffmpeg
 - Dataset provenance manifest validator
 - Clear separation between static GitHub Pages UI and future GPU backend
+
+## v0.8 additions
+- Explicit `NOVA_NATIVE_ENABLED=1` backend switch for native checkpoints
+- Native Creative Director jobs can export MP4 directly through the API
+- Preview renderer remains the default when native inference is disabled
+- Health endpoint reports active renderer and native checkpoint configuration
+- Optional native runtime dependencies are isolated in `server/requirements-native.txt`
 
 ## Next engineering milestones
 1. Deploy the NOVA backend and connect the live frontend

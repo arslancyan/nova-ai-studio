@@ -26,7 +26,7 @@
 
 ## Stage 1B — Data foundation
 - [x] Synthetic dataset path
-- [ ] Establish a small, documented real-video dataset
+- [x] Establish a creator-owned real-video benchmark path (4 local clips supplied by creator; raw media remains outside Git)
 - [x] Identify a candidate open-license source for the first real-video benchmark (manual per-clip verification still required)
 - [x] Add conservative YouTube candidate rights gate (metadata-only; no automatic downloading)
 - [ ] Validate every real source license/permission
@@ -38,6 +38,7 @@
 - [x] Dataset checksum manifest
 - [x] Real-video metadata/provenance validator
 - [x] End-to-end real-video preparation smoke test (CI-generated media)
+- [x] Creator-owned media inspector with SHA-256 and FFprobe provenance manifest
 
 ## Stage 2 — NOVA latent diffusion
 - [x] Native latent denoiser architecture

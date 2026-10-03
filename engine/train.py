@@ -20,10 +20,22 @@ from .tokenizer import encode, vocab_size
 class NovaDataset(Dataset):
     def __init__(self, root="data", max_text_tokens=96):
         root = Path(root)
-        self.clips = torch.load(root / "clips.pt", map_location="cpu")
+        self.clips = torch.load(root / "clips.pt", map_location="cpu", weights_only=True)
         self.captions = (root / "captions.txt").read_text(encoding="utf-8").splitlines()
+        if not isinstance(self.clips, torch.Tensor):
+            raise ValueError("clips.pt must contain a torch.Tensor.")
+        if self.clips.ndim != 5:
+            raise ValueError("clips.pt must have shape [N, C, T, H, W].")
+        if len(self.clips) == 0:
+            raise ValueError("Training dataset is empty.")
+        if not torch.isfinite(self.clips).all():
+            raise ValueError("Training dataset contains NaN or infinite values.")
+        if self.clips.min() < -1.001 or self.clips.max() > 1.001:
+            raise ValueError("Video tensor values must be approximately within [-1, 1].")
         if len(self.clips) != len(self.captions):
             raise ValueError("clips.pt and captions.txt must contain the same number of samples.")
+        if any(not caption.strip() for caption in self.captions):
+            raise ValueError("Captions must not be empty.")
         self.max_text_tokens = max_text_tokens
 
     def __len__(self):
@@ -43,7 +55,11 @@ def train(epochs=1, batch_size=2, lr=2e-4, root="data", out="checkpoints/nova0.p
     model.to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
+    if len(loader) == 0:
+        raise ValueError("No training batches available. Check dataset size and batch_size.")
+
     for epoch in range(epochs):
+        last_loss = None
         for video, text_ids in loader:
             video, text_ids = video.to(device), text_ids.to(device)
             t = torch.randint(0, cfg.timesteps, (video.size(0),), device=device)
@@ -55,8 +71,9 @@ def train(epochs=1, batch_size=2, lr=2e-4, root="data", out="checkpoints/nova0.p
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
+            last_loss = loss.detach()
 
-        print(f"epoch={epoch + 1} loss={loss.item():.6f}")
+        print(f"epoch={epoch + 1} loss={float(last_loss):.6f}")
 
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     torch.save({"config": cfg.__dict__, "state_dict": model.state_dict()}, out)

@@ -1,6 +1,7 @@
-"""NOVA API with asynchronous MP4 render-preview jobs.
+"""NOVA API with asynchronous preview and optional native-model jobs.
 
-The renderer is infrastructure only; the trained NOVA model will replace it later.
+Preview rendering remains the safe default. Native inference is enabled explicitly
+with NOVA_NATIVE_ENABLED=1 and documented checkpoints.
 """
 from __future__ import annotations
 
@@ -18,6 +19,11 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .renderer import render_image, render_preview
+
+NATIVE_ENABLED = os.getenv("NOVA_NATIVE_ENABLED", "0").lower() in {"1", "true", "yes"}
+NATIVE_AE_CHECKPOINT = os.getenv("NOVA_AE_CHECKPOINT", "checkpoints/nova_ae.pt")
+NATIVE_LATENT_CHECKPOINT = os.getenv("NOVA_LATENT_CHECKPOINT", "checkpoints/nova_latent.pt")
+NATIVE_FPS = max(1, int(os.getenv("NOVA_NATIVE_FPS", "8")))
 
 VERSION = "0.7.0"
 OUTPUT_DIR = Path(os.getenv("NOVA_OUTPUT_DIR", "outputs"))
@@ -91,14 +97,24 @@ def _set_job(job_id: str, **changes) -> None:
 def _render_job(job_id: str, request: JobCreate) -> None:
     _set_job(job_id, state=JobState.rendering)
     try:
-        output = render_preview(
-            job_id=job_id,
-            prompt=request.prompt,
-            duration_seconds=request.duration_seconds,
-            aspect_ratio=request.aspect_ratio,
-            camera=request.camera,
-            seed=request.seed,
-        )
+        if NATIVE_ENABLED:
+            from engine.native_runner import run_job
+
+            output = OUTPUT_DIR / f"{job_id}.mp4"
+            native_job = request.model_dump()
+            native_job["autoencoder_checkpoint"] = NATIVE_AE_CHECKPOINT
+            native_job["latent_checkpoint"] = NATIVE_LATENT_CHECKPOINT
+            native_job["fps"] = NATIVE_FPS
+            run_job(native_job, str(output))
+        else:
+            output = render_preview(
+                job_id=job_id,
+                prompt=request.prompt,
+                duration_seconds=request.duration_seconds,
+                aspect_ratio=request.aspect_ratio,
+                camera=request.camera,
+                seed=request.seed,
+            )
         relative = f"/outputs/{Path(output).name}"
         output_url = f"{PUBLIC_BASE_URL}{relative}" if PUBLIC_BASE_URL else relative
         _set_job(job_id, state=JobState.complete, output_url=output_url)
@@ -111,8 +127,12 @@ def health():
         "ok": True,
         "service": "nova-api",
         "version": VERSION,
-        "renderer": "nova-render-preview",
-        "native_model": "not trained",
+        "renderer": "nova-native" if NATIVE_ENABLED else "nova-render-preview",
+        "native_model": "enabled" if NATIVE_ENABLED else "disabled",
+        "native_checkpoints": {
+            "autoencoder": NATIVE_AE_CHECKPOINT,
+            "latent": NATIVE_LATENT_CHECKPOINT,
+        } if NATIVE_ENABLED else None,
         "job_schema": "0.7",
         "director_schema": "0.1",
     }

@@ -60,6 +60,9 @@ def audit(train_csv, val_csv, min_sources=4, require_rights_verified=False):
 
     for r in all_rows:
         sid = r.get("source_id", "").strip()
+        if not sid:
+            errors.append("row is missing source_id")
+            continue
         if r.get("ownership", "").strip().lower() not in {"creator-owned", "owned"}:
             errors.append(f"{sid}: ownership must be creator-owned")
         if not r.get("creator", "").strip():

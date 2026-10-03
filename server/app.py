@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 
 from .renderer import render_image, render_preview
 
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 OUTPUT_DIR = Path(os.getenv("NOVA_OUTPUT_DIR", "outputs"))
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 PUBLIC_BASE_URL = os.getenv("NOVA_PUBLIC_BASE_URL", "").rstrip("/")
@@ -42,8 +42,21 @@ class JobState(str, Enum):
     complete = "complete"
     failed = "failed"
 
+class DirectorSpec(BaseModel):
+    subject: str = Field(default="", max_length=1000)
+    action: str = Field(default="", max_length=1000)
+    environment: str = Field(default="", max_length=1000)
+    camera_movement: str = Field(default="auto", max_length=200)
+    lighting: str = Field(default="", max_length=500)
+    style: str = Field(default="", max_length=1000)
+    motion: str = Field(default="natural", max_length=100)
+    negative_prompt: str = Field(default="", max_length=2000)
+
 class JobCreate(BaseModel):
     prompt: str = Field(min_length=1, max_length=4000)
+    project_name: str = Field(default="Untitled NOVA project", max_length=120)
+    seed: int | None = Field(default=None, ge=0, le=2**63-1)
+    director: DirectorSpec = Field(default_factory=DirectorSpec)
     model: str = "nova-cinematic"
     duration_seconds: int = Field(default=5, ge=1, le=60)
     aspect_ratio: str = "16:9"
@@ -78,6 +91,7 @@ def _render_job(job_id: str, request: JobCreate) -> None:
             duration_seconds=request.duration_seconds,
             aspect_ratio=request.aspect_ratio,
             camera=request.camera,
+            seed=request.seed,
         )
         relative = f"/outputs/{Path(output).name}"
         output_url = f"{PUBLIC_BASE_URL}{relative}" if PUBLIC_BASE_URL else relative
@@ -93,6 +107,8 @@ def health():
         "version": VERSION,
         "renderer": "nova-render-preview",
         "native_model": "not trained",
+        "job_schema": "0.6",
+        "director_schema": "0.1",
     }
 
 @app.post("/v1/jobs", response_model=Job, status_code=202)

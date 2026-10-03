@@ -14,10 +14,11 @@
 - [x] Random-init 3D video autoencoder
 - [x] Rights-safe synthetic dataset generator
 - [x] Autoencoder training entry point
+- [x] Best-checkpoint persistence and training metadata
 - [x] Autoencoder architecture smoke test
 - [ ] Train first synthetic reconstruction checkpoint (GPU quality run)
 - [x] Tiny CPU training profile for end-to-end native pipeline validation
-- [ ] Measure reconstruction quality on held-out synthetic clips
+- [x] Measure reconstruction quality on held-out synthetic clips
 
 ## Stage 1B — Data foundation
 - [x] Synthetic dataset path

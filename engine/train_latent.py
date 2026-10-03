@@ -36,6 +36,10 @@ def train(
     out="checkpoints/nova_latent.pt",
     resume=None,
     history_out="checkpoints/nova_latent_history.jsonl",
+    model_dim=128,
+    num_heads=4,
+    num_layers=4,
+    diffusion_steps=1000,
 ):
     _set_seed(seed)
     root = Path(data_root)
@@ -74,9 +78,12 @@ def train(
         latent_channels=latent_channels,
         text_vocab_size=vocab_size(),
         latent_tokens=latent_tokens,
+        model_dim=model_dim,
+        num_heads=num_heads,
+        num_layers=num_layers,
     ).to(device)
 
-    diffusion = GaussianDiffusion(steps=1000)
+    diffusion = GaussianDiffusion(steps=diffusion_steps)
     text_ids = torch.tensor(
         [encode(caption) for caption in captions], dtype=torch.long
     )
@@ -192,6 +199,10 @@ def train(
                         "val_loss": val_loss,
                         "best_val": best_val,
                         "seed": seed,
+                        "model_dim": model_dim,
+                        "num_heads": num_heads,
+                        "num_layers": num_layers,
+                        "diffusion_steps": diffusion_steps,
                     }
                 )
                 + "\n"
@@ -208,6 +219,10 @@ def train(
                 "epoch": epoch + 1,
                 "best_val": best_val,
                 "seed": seed,
+                "model_dim": model_dim,
+                "num_heads": num_heads,
+                "num_layers": num_layers,
+                "diffusion_steps": diffusion_steps,
             },
             out,
         )

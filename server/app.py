@@ -25,7 +25,7 @@ NATIVE_AE_CHECKPOINT = os.getenv("NOVA_AE_CHECKPOINT", "checkpoints/nova_ae.pt")
 NATIVE_LATENT_CHECKPOINT = os.getenv("NOVA_LATENT_CHECKPOINT", "checkpoints/nova_latent.pt")
 NATIVE_FPS = max(1, int(os.getenv("NOVA_NATIVE_FPS", "8")))
 
-VERSION = "0.7.0"
+VERSION = "0.8.0"
 OUTPUT_DIR = Path(os.getenv("NOVA_OUTPUT_DIR", "outputs"))
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 PUBLIC_BASE_URL = os.getenv("NOVA_PUBLIC_BASE_URL", "").rstrip("/")
@@ -81,6 +81,8 @@ class Job(BaseModel):
     state: JobState
     request: JobCreate
     created_at: str
+    progress: int = Field(default=0, ge=0, le=100)
+    stage: str = "queued"
     output_url: str | None = None
     error: str | None = None
 
@@ -95,7 +97,7 @@ def _set_job(job_id: str, **changes) -> None:
             _jobs[job_id] = current.model_copy(update=changes)
 
 def _render_job(job_id: str, request: JobCreate) -> None:
-    _set_job(job_id, state=JobState.rendering)
+    _set_job(job_id, state=JobState.rendering, progress=18, stage="rendering")
     try:
         if NATIVE_ENABLED:
             from engine.native_runner import run_job
@@ -117,9 +119,9 @@ def _render_job(job_id: str, request: JobCreate) -> None:
             )
         relative = f"/outputs/{Path(output).name}"
         output_url = f"{PUBLIC_BASE_URL}{relative}" if PUBLIC_BASE_URL else relative
-        _set_job(job_id, state=JobState.complete, output_url=output_url)
+        _set_job(job_id, state=JobState.complete, progress=100, stage="complete", output_url=output_url)
     except Exception as exc:
-        _set_job(job_id, state=JobState.failed, error=str(exc))
+        _set_job(job_id, state=JobState.failed, progress=100, stage="failed", error=str(exc))
 
 @app.get("/health")
 def health():
@@ -133,8 +135,13 @@ def health():
             "autoencoder": NATIVE_AE_CHECKPOINT,
             "latent": NATIVE_LATENT_CHECKPOINT,
         } if NATIVE_ENABLED else None,
-        "job_schema": "0.7",
+        "job_schema": "0.8",
         "director_schema": "0.1",
+        "native_ready": bool(
+            NATIVE_ENABLED
+            and Path(NATIVE_AE_CHECKPOINT).is_file()
+            and Path(NATIVE_LATENT_CHECKPOINT).is_file()
+        ),
     }
 
 @app.post("/v1/jobs", response_model=Job, status_code=202)
@@ -144,6 +151,8 @@ def create_job(request: JobCreate):
         state=JobState.queued,
         request=request,
         created_at=datetime.now(timezone.utc).isoformat(),
+        progress=5,
+        stage="queued",
     )
     with _lock:
         _jobs[job.id] = job

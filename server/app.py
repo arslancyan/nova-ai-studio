@@ -24,8 +24,9 @@ NATIVE_ENABLED = os.getenv("NOVA_NATIVE_ENABLED", "0").lower() in {"1", "true", 
 NATIVE_AE_CHECKPOINT = os.getenv("NOVA_AE_CHECKPOINT", "checkpoints/nova_ae.pt")
 NATIVE_LATENT_CHECKPOINT = os.getenv("NOVA_LATENT_CHECKPOINT", "checkpoints/nova_latent.pt")
 NATIVE_FPS = max(1, int(os.getenv("NOVA_NATIVE_FPS", "8")))
+NATIVE_PROFILE = os.getenv("NOVA_NATIVE_PROFILE", "creator-16f-base")
 
-VERSION = "0.8.0"
+VERSION = "0.9.0"
 OUTPUT_DIR = Path(os.getenv("NOVA_OUTPUT_DIR", "outputs"))
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 PUBLIC_BASE_URL = os.getenv("NOVA_PUBLIC_BASE_URL", "").rstrip("/")
@@ -42,11 +43,13 @@ app.add_middleware(
 )
 app.mount("/outputs", StaticFiles(directory=OUTPUT_DIR), name="outputs")
 
+
 class JobState(str, Enum):
     queued = "queued"
     rendering = "rendering"
     complete = "complete"
     failed = "failed"
+
 
 class DirectorSpec(BaseModel):
     subject: str = Field(default="", max_length=1000)
@@ -58,10 +61,11 @@ class DirectorSpec(BaseModel):
     motion: str = Field(default="natural", max_length=100)
     negative_prompt: str = Field(default="", max_length=2000)
 
+
 class JobCreate(BaseModel):
     prompt: str = Field(min_length=1, max_length=4000)
     project_name: str = Field(default="Untitled NOVA project", max_length=120)
-    seed: int | None = Field(default=None, ge=0, le=2**63-1)
+    seed: int | None = Field(default=None, ge=0, le=2**63 - 1)
     director: DirectorSpec = Field(default_factory=DirectorSpec)
     model: str = "nova-cinematic"
     duration_seconds: int = Field(default=5, ge=1, le=60)
@@ -71,10 +75,13 @@ class JobCreate(BaseModel):
     quality: str = "draft"
     sampler: str = Field(default="ddpm", pattern="^(ddpm|ddim)$")
     sampling_steps: int | None = Field(default=None, ge=2, le=1000)
-    frames: int = Field(default=8, ge=4, le=64)
-    height: int = Field(default=32, ge=4, le=512)
-    width: int = Field(default=32, ge=4, le=512)
+    # Native creator profile targets 16 frames at 64×64. Preview rendering
+    # ignores these fields, so the API can use the same request contract.
+    frames: int = Field(default=16, ge=4, le=64)
+    height: int = Field(default=64, ge=4, le=512)
+    width: int = Field(default=64, ge=4, le=512)
     timesteps: int = Field(default=1000, ge=2, le=1000)
+
 
 class Job(BaseModel):
     id: str
@@ -86,15 +93,18 @@ class Job(BaseModel):
     output_url: str | None = None
     error: str | None = None
 
+
 _jobs: dict[str, Job] = {}
 _lock = Lock()
 _executor = ThreadPoolExecutor(max_workers=max(1, int(os.getenv("NOVA_RENDER_WORKERS", "1"))))
+
 
 def _set_job(job_id: str, **changes) -> None:
     with _lock:
         current = _jobs.get(job_id)
         if current:
             _jobs[job_id] = current.model_copy(update=changes)
+
 
 def _render_job(job_id: str, request: JobCreate) -> None:
     _set_job(job_id, state=JobState.rendering, progress=18, stage="rendering")
@@ -107,6 +117,7 @@ def _render_job(job_id: str, request: JobCreate) -> None:
             native_job["autoencoder_checkpoint"] = NATIVE_AE_CHECKPOINT
             native_job["latent_checkpoint"] = NATIVE_LATENT_CHECKPOINT
             native_job["fps"] = NATIVE_FPS
+            native_job["native_profile"] = NATIVE_PROFILE
             run_job(native_job, str(output))
         else:
             output = render_preview(
@@ -119,9 +130,22 @@ def _render_job(job_id: str, request: JobCreate) -> None:
             )
         relative = f"/outputs/{Path(output).name}"
         output_url = f"{PUBLIC_BASE_URL}{relative}" if PUBLIC_BASE_URL else relative
-        _set_job(job_id, state=JobState.complete, progress=100, stage="complete", output_url=output_url)
+        _set_job(
+            job_id,
+            state=JobState.complete,
+            progress=100,
+            stage="complete",
+            output_url=output_url,
+        )
     except Exception as exc:
-        _set_job(job_id, state=JobState.failed, progress=100, stage="failed", error=str(exc))
+        _set_job(
+            job_id,
+            state=JobState.failed,
+            progress=100,
+            stage="failed",
+            error=str(exc),
+        )
+
 
 @app.get("/health")
 def health():
@@ -131,11 +155,12 @@ def health():
         "version": VERSION,
         "renderer": "nova-native" if NATIVE_ENABLED else "nova-render-preview",
         "native_model": "enabled" if NATIVE_ENABLED else "disabled",
+        "native_profile": NATIVE_PROFILE if NATIVE_ENABLED else None,
         "native_checkpoints": {
             "autoencoder": NATIVE_AE_CHECKPOINT,
             "latent": NATIVE_LATENT_CHECKPOINT,
         } if NATIVE_ENABLED else None,
-        "job_schema": "0.8",
+        "job_schema": "0.9",
         "director_schema": "0.1",
         "native_ready": bool(
             NATIVE_ENABLED
@@ -143,6 +168,7 @@ def health():
             and Path(NATIVE_LATENT_CHECKPOINT).is_file()
         ),
     }
+
 
 @app.post("/v1/jobs", response_model=Job, status_code=202)
 def create_job(request: JobCreate):
@@ -164,8 +190,10 @@ class ImageCreate(BaseModel):
     prompt: str = Field(min_length=1, max_length=4000)
     aspect_ratio: str = "16:9"
 
+
 class ImageResult(BaseModel):
     output_url: str
+
 
 @app.post("/v1/images", response_model=ImageResult)
 def create_image(request: ImageCreate):
@@ -181,6 +209,7 @@ def create_image(request: ImageCreate):
         return ImageResult(output_url=output_url)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
 
 @app.get("/v1/jobs/{job_id}", response_model=Job)
 def get_job(job_id: str):

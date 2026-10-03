@@ -135,11 +135,21 @@ def train(
             "optimizer": optimizer.state_dict(),
             "scaler": scaler.state_dict() if use_amp else None,
             "latent_channels": 8,
+            "input_shape": [3, int(clips.shape[2]), int(clips.shape[3]), int(clips.shape[4])],
             "epoch": epoch + 1,
             "best_val": best_val,
             "seed": seed,
+            "dataset": str(root),
+            "training": {
+                "epochs_target": epochs,
+                "batch_size": batch_size,
+                "learning_rate": lr,
+                "val_fraction": val_fraction,
+            },
         }
         torch.save(checkpoint, out_path)
+        if val_loss <= best_val + 1e-12:
+            torch.save(checkpoint, out_path.with_name(out_path.stem + ".best" + out_path.suffix))
         print(
             f"epoch={epoch + 1} train_loss={train_loss:.6f} "
             f"val_loss={val_loss:.6f} saved={out_path}"

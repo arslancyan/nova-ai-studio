@@ -46,3 +46,16 @@ The native NOVA checkpoint must only be trained on data that we have documented 
 ## Research status
 
 NOVA-0 is an engineering/research prototype, not yet a competitive video generator.
+
+
+## Native job runner
+
+Creative Director jobs can now be executed through the explicit native path:
+
+`python -m engine.native_runner --job engine/examples/native_job.json --output outputs/native.mp4`
+
+The runner requires trained NOVA autoencoder and latent checkpoints. It does **not** fall back to the preview renderer when checkpoints are missing. The pipeline is:
+
+Creative Director JSON → native prompt conditioning → latent diffusion → native autoencoder decode → MP4 export.
+
+The included example is a schema/integration fixture, not a claim of trained-model quality.

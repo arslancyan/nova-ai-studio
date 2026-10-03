@@ -12,7 +12,8 @@ CPU CI validates the complete native path at tiny scale:
 4. Run native text-conditioned latent sampling.
 5. Exercise the real-video ingestion path with CI-generated media.
 6. Validate documented train/validation splits and provenance fields.
-5. Decode the latent result through the native autoencoder.
+7. On public CI, run a tiny random-init training profile and retain the resulting checkpoint as an engineering artifact.
+8. Decode the latent result through the native autoencoder.
 6. Validate the resulting video tensor.
 7. Export the tensor to MP4.
 

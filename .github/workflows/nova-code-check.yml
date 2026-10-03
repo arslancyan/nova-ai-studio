@@ -47,3 +47,5 @@ jobs:
         run: python -m engine.evaluate_autoencoder --root /tmp/nova-synthetic --checkpoint /tmp/nova-ae.pt --batch-size 4
       - name: Compile native exporter
         run: python -m compileall -q engine/export_video.py
+      - name: Run native video exporter smoke test
+        run: python -m engine.export_video_smoke_test

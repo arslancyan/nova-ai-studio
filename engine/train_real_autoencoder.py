@@ -4,7 +4,7 @@ The prepared dataset contains one [3,T,H,W] tensor per clip plus train/val CSVs.
 This script keeps provenance metadata alongside the training checkpoint.
 """
 from __future__ import annotations
-import argparse, csv
+import argparse, csv, random
 from pathlib import Path
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -37,8 +37,18 @@ def train(train_csv="data/real/train.csv", val_csv="data/real/val.csv",
     val_loader = DataLoader(val_ds, batch_size=batch_size)
     out_path = Path(out); out_path.parent.mkdir(parents=True, exist_ok=True)
     best = float("inf")
+    start_epoch = 0
 
-    for epoch in range(epochs):
+    if resume:
+        pack = torch.load(resume, map_location=device, weights_only=True)
+        model.load_state_dict(pack["state_dict"])
+        if "optimizer" in pack:
+            optimizer.load_state_dict(pack["optimizer"])
+        start_epoch = int(pack.get("epoch", 0))
+        best = float(pack.get("best_val", best))
+        print(f"resuming from epoch={start_epoch}")
+
+    for epoch in range(start_epoch, epochs):
         model.train(); total = 0.0
         for video in loader:
             video = video.to(device)
@@ -61,7 +71,14 @@ def train(train_csv="data/real/train.csv", val_csv="data/real/val.csv",
             "state_dict": model.state_dict(), "epoch": epoch + 1,
             "best_val": min(best, val_loss), "input_shape": list(sample.shape),
             "dataset_train": train_csv, "dataset_val": val_csv,
-            "training": {"epochs_target": epochs, "batch_size": batch_size, "learning_rate": lr},
+            "latent_channels": 8,
+            "seed": seed,
+            "training": {
+                "epochs_target": epochs,
+                "batch_size": batch_size,
+                "learning_rate": lr,
+                "val_fraction": len(val_ds) / max(1, len(train_ds) + len(val_ds)),
+            },
         }
         torch.save(pack, out_path)
         if val_loss < best:
@@ -77,5 +94,7 @@ if __name__ == "__main__":
     p.add_argument("--batch-size", type=int, default=2)
     p.add_argument("--lr", type=float, default=2e-4)
     p.add_argument("--out", default="checkpoints/nova_real_ae.pt")
+    p.add_argument("--seed", type=int, default=7)
+    p.add_argument("--resume", default=None)
     a=p.parse_args()
-    train(a.train_csv,a.val_csv,a.epochs,a.batch_size,a.lr,a.out)
+    train(a.train_csv,a.val_csv,a.epochs,a.batch_size,a.lr,a.out,a.seed,a.resume)

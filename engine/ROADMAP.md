@@ -38,10 +38,10 @@
 - [ ] Sample generation through the trained autoencoder
 
 ## Stage 3 — Improve the architecture
-- [ ] Better temporal blocks
+- [x] Factorized spatial/temporal attention
 - [ ] Learned/dynamic positional encoding
-- [ ] Efficient attention
-- [ ] Stronger text conditioning
+- [x] Efficient attention
+- [x] Stronger text conditioning
 - [ ] Better sampling
 - [ ] Image/reference conditioning
 

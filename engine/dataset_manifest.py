@@ -16,7 +16,7 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def build_manifest(root: str, output: str = "manifest.json"):
+def build_manifest(root: str, output: str = "manifest.json", provenance_note: str = ""):
     base = Path(root)
     entries = []
     for path in sorted(base.rglob("*")):
@@ -30,15 +30,21 @@ def build_manifest(root: str, output: str = "manifest.json"):
             }
         )
 
+    is_synthetic = base.name == "synthetic" or "synthetic" in str(base).lower()
     manifest = {
         "format": "nova-dataset-manifest-v1",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "root": str(base),
         "entries": entries,
         "provenance": {
-            "external_media_used": False,
-            "training_rights_verified": True,
-            "notes": "Synthetic NOVA dataset contains no external media.",
+            "external_media_used": not is_synthetic,
+            "training_rights_verified": bool(is_synthetic),
+            "status": "synthetic_verified" if is_synthetic else "manual_rights_review_required",
+            "notes": provenance_note or (
+                "Synthetic NOVA dataset contains no external media."
+                if is_synthetic
+                else "Real-media rights must be manually verified; checksum does not establish legal permission."
+            ),
         },
     }
     Path(output).write_text(
@@ -52,8 +58,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default="data/synthetic")
     parser.add_argument("--output", default="data/synthetic/manifest.json")
+    parser.add_argument("--provenance-note", default="")
     args = parser.parse_args()
-    build_manifest(args.root, args.output)
+    build_manifest(args.root, args.output, args.provenance_note)
 
 
 if __name__ == "__main__":

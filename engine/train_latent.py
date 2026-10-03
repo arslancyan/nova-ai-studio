@@ -1,20 +1,22 @@
 """Train NOVA latent diffusion after the autoencoder is trained.
 
-This trains the native denoiser from random initialization. No pretrained
-video model or proprietary generator is used.
+The native denoiser is always trained from random initialization. This module
+adds staged capacity profiles and source-balanced sampling so overlapping
+windows from one creator-owned source cannot dominate the optimization.
 """
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import random
 from pathlib import Path
 
 import torch
-from torch.utils.data import DataLoader, TensorDataset, Dataset
-import csv
+from torch.utils.data import DataLoader, TensorDataset, Dataset, WeightedRandomSampler
 
 from .autoencoder import build_autoencoder
+from .capacity_profiles import get_capacity_profile
 from .diffusion import GaussianDiffusion
 from .latent_model import build_latent_model
 from .tokenizer import encode, vocab_size
@@ -38,20 +40,46 @@ class PreparedVideoDataset(Dataset):
 
     def __getitem__(self, index):
         row = self.rows[index]
-        video = torch.load(row["prepared_path"], map_location="cpu", weights_only=True).float()
+        video = torch.load(
+            row["prepared_path"], map_location="cpu", weights_only=True
+        ).float()
         if video.ndim != 4 or video.shape[0] != 3:
             raise ValueError(f"{row['sample_id']}: expected [3,T,H,W]")
-        return video, row["caption"]
+        return video, row["caption"], row.get("sample_id", "unknown")
+
 
 def load_prepared_csv(train_csv, val_csv):
     train_ds = PreparedVideoDataset(train_csv)
     val_ds = PreparedVideoDataset(val_csv)
-    train_videos, train_captions = zip(*(train_ds[i] for i in range(len(train_ds))))
-    val_videos, val_captions = zip(*(val_ds[i] for i in range(len(val_ds))))
+    train_items = [train_ds[i] for i in range(len(train_ds))]
+    val_items = [val_ds[i] for i in range(len(val_ds))]
+    train_videos, train_captions, train_sources = zip(*train_items)
+    val_videos, val_captions, val_sources = zip(*val_items)
     return (
-        torch.stack(list(train_videos)), list(train_captions),
-        torch.stack(list(val_videos)), list(val_captions),
+        torch.stack(list(train_videos)),
+        list(train_captions),
+        list(train_sources),
+        torch.stack(list(val_videos)),
+        list(val_captions),
+        list(val_sources),
     )
+
+
+def _balanced_sampler(source_ids, seed):
+    counts = {}
+    for source_id in source_ids:
+        counts[source_id] = counts.get(source_id, 0) + 1
+    weights = torch.tensor(
+        [1.0 / counts[source_id] for source_id in source_ids],
+        dtype=torch.double,
+    )
+    return WeightedRandomSampler(
+        weights=weights,
+        num_samples=len(source_ids),
+        replacement=True,
+        generator=torch.Generator().manual_seed(seed),
+    )
+
 
 def train(
     data_root="data/synthetic",
@@ -71,21 +99,45 @@ def train(
     num_heads=4,
     num_layers=4,
     diffusion_steps=1000,
+    profile=None,
+    source_balance=True,
+    horizontal_flip=False,
 ):
     _set_seed(seed)
     if bool(train_csv) != bool(val_csv):
         raise ValueError("train_csv and val_csv must be provided together")
 
+    profile_name = profile
+    if profile_name:
+        selected = get_capacity_profile(profile_name)
+        model_dim = selected.model_dim
+        text_dim = selected.text_dim
+        num_heads = selected.num_heads
+        num_layers = selected.num_layers
+        diffusion_steps = selected.diffusion_steps
+
+    train_sources = None
     if train_csv and val_csv:
-        train_clips, train_captions, val_clips, val_captions = load_prepared_csv(train_csv, val_csv)
+        (
+            train_clips,
+            train_captions,
+            train_sources,
+            val_clips,
+            val_captions,
+            val_sources,
+        ) = load_prepared_csv(train_csv, val_csv)
         clips = torch.cat([train_clips, val_clips], dim=0)
         captions = train_captions + val_captions
+        all_sources = train_sources + val_sources
         explicit_split = True
         train_count = train_clips.shape[0]
     else:
         root = Path(data_root)
-        clips = torch.load(root / "clips.pt", map_location="cpu", weights_only=True).float()
+        clips = torch.load(
+            root / "clips.pt", map_location="cpu", weights_only=True
+        ).float()
         captions = (root / "captions.txt").read_text(encoding="utf-8").splitlines()
+        all_sources = ["synthetic"] * clips.shape[0]
         explicit_split = False
         train_count = 0
 
@@ -93,6 +145,8 @@ def train(
         raise ValueError("Expected [N,3,T,H,W] clips")
     if len(captions) != clips.shape[0]:
         raise ValueError("Caption count must match clip count")
+    if len(all_sources) != clips.shape[0]:
+        raise ValueError("Source metadata count must match clip count")
     if not torch.isfinite(clips).all():
         raise ValueError("Dataset contains NaN or infinity")
 
@@ -142,6 +196,7 @@ def train(
         val_idx = torch.arange(train_count, clips.shape[0])
         if val_idx.numel() == 0:
             raise ValueError("Prepared validation split is empty")
+        split_train_sources = train_sources
     else:
         permutation = torch.randperm(clips.shape[0], generator=generator)
         val_count = max(1, int(round(clips.shape[0] * val_fraction)))
@@ -149,13 +204,23 @@ def train(
         train_idx = permutation[val_count:]
         if train_idx.numel() == 0:
             raise ValueError("Dataset is too small for a non-empty training split")
+        split_train_sources = [all_sources[int(i)] for i in train_idx.tolist()]
 
-    train_loader = DataLoader(
-        TensorDataset(clips[train_idx], text_ids[train_idx]),
-        batch_size=batch_size,
-        shuffle=True,
-        generator=generator,
-    )
+    train_data = TensorDataset(clips[train_idx], text_ids[train_idx])
+    if source_balance:
+        sampler = _balanced_sampler(split_train_sources, seed)
+        train_loader = DataLoader(
+            train_data,
+            batch_size=batch_size,
+            sampler=sampler,
+        )
+    else:
+        train_loader = DataLoader(
+            train_data,
+            batch_size=batch_size,
+            shuffle=True,
+            generator=generator,
+        )
     val_loader = DataLoader(
         TensorDataset(clips[val_idx], text_ids[val_idx]),
         batch_size=batch_size,
@@ -210,6 +275,10 @@ def train(
         for video, ids in train_loader:
             video = video.to(device)
             ids = ids.to(device)
+
+            if horizontal_flip and random.random() < 0.5:
+                video = video.flip(-1)
+
             with torch.no_grad():
                 clean_latent = autoencoder.encode(video)
 
@@ -253,11 +322,16 @@ def train(
                         "val_loss": val_loss,
                         "best_val": best_val,
                         "seed": seed,
+                        "profile": profile_name,
                         "model_dim": model_dim,
                         "text_dim": text_dim,
                         "num_heads": num_heads,
                         "num_layers": num_layers,
                         "diffusion_steps": diffusion_steps,
+                        "source_count": len(set(all_sources)),
+                        "window_count": len(all_sources),
+                        "source_balanced": source_balance,
+                        "horizontal_flip": horizontal_flip,
                     }
                 )
                 + "\n"
@@ -271,9 +345,13 @@ def train(
                 "scaler": scaler.state_dict(),
                 "latent_channels": latent_channels,
                 "latent_tokens": latent_tokens,
+                "latent_frames": latent_frames,
+                "latent_height": latent_height,
+                "latent_width": latent_width,
                 "epoch": epoch + 1,
                 "best_val": best_val,
                 "seed": seed,
+                "profile": profile_name,
                 "model_dim": model_dim,
                 "text_dim": text_dim,
                 "num_heads": num_heads,
@@ -282,6 +360,11 @@ def train(
                 "dataset_mode": "prepared_csv" if explicit_split else "synthetic",
                 "train_csv": train_csv,
                 "val_csv": val_csv,
+                "source_count": len(set(all_sources)),
+                "window_count": len(all_sources),
+                "source_balanced": source_balance,
+                "horizontal_flip": horizontal_flip,
+                "native_random_init": True,
             },
             out,
         )
@@ -290,11 +373,15 @@ def train(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train the native NOVA latent denoiser")
+    parser = argparse.ArgumentParser(
+        description="Train the native NOVA latent denoiser"
+    )
     parser.add_argument("--data-root", default="data/synthetic")
     parser.add_argument("--train-csv", default=None)
     parser.add_argument("--val-csv", default=None)
-    parser.add_argument("--autoencoder-checkpoint", default="checkpoints/nova_ae.pt")
+    parser.add_argument(
+        "--autoencoder-checkpoint", default="checkpoints/nova_ae.pt"
+    )
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--lr", type=float, default=2e-4)
@@ -302,12 +389,25 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--out", default="checkpoints/nova_latent.pt")
     parser.add_argument("--resume", default=None)
-    parser.add_argument("--history-out", default="checkpoints/nova_latent_history.jsonl")
+    parser.add_argument(
+        "--history-out", default="checkpoints/nova_latent_history.jsonl"
+    )
+    parser.add_argument("--profile", default=None)
     parser.add_argument("--model-dim", type=int, default=128)
     parser.add_argument("--text-dim", type=int, default=128)
     parser.add_argument("--num-heads", type=int, default=4)
     parser.add_argument("--num-layers", type=int, default=4)
     parser.add_argument("--diffusion-steps", type=int, default=1000)
+    parser.add_argument(
+        "--no-source-balance",
+        action="store_true",
+        help="Disable creator/source-balanced window sampling.",
+    )
+    parser.add_argument(
+        "--horizontal-flip",
+        action="store_true",
+        help="Randomly mirror training clips. Keep off when text/logos must remain legible.",
+    )
     args = parser.parse_args()
     train(
         data_root=args.data_root,
@@ -322,9 +422,12 @@ if __name__ == "__main__":
         out=args.out,
         resume=args.resume,
         history_out=args.history_out,
+        profile=args.profile,
         model_dim=args.model_dim,
         text_dim=args.text_dim,
         num_heads=args.num_heads,
         num_layers=args.num_layers,
         diffusion_steps=args.diffusion_steps,
+        source_balance=not args.no_source_balance,
+        horizontal_flip=args.horizontal_flip,
     )

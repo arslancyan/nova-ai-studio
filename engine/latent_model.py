@@ -1,8 +1,7 @@
 """NOVA native latent video diffusion model.
 
-The model is initialized from random weights. It uses factorized spatial and
-temporal attention so the first native training stage is practical on modest
-GPU memory without relying on a pretrained video backbone.
+Randomly initialized native denoiser. No pretrained video backbone is used.
+The model uses factorized spatial/temporal attention plus text cross-attention.
 """
 from __future__ import annotations
 
@@ -29,7 +28,7 @@ class SinusoidalTimeEmbedding(nn.Module):
 
 
 class NovaLatentVideoModel(nn.Module):
-    """Text-conditioned denoiser with factorized spatial/temporal attention."""
+    """Text-conditioned denoiser with explicit temporal/spatial conditioning."""
 
     def __init__(
         self,
@@ -46,11 +45,17 @@ class NovaLatentVideoModel(nn.Module):
         latent_width: int = 8,
     ):
         super().__init__()
+        if model_dim % num_heads != 0:
+            raise ValueError("model_dim must be divisible by num_heads")
+        if text_dim % 4 != 0:
+            raise ValueError("text_dim must be divisible by 4")
+
         self.latent_channels = latent_channels
         self.latent_tokens = latent_tokens
         self.latent_frames = latent_frames
         self.latent_height = latent_height
         self.latent_width = latent_width
+        self.max_text_tokens = max_text_tokens
 
         expected_tokens = latent_frames * latent_height * latent_width
         if expected_tokens != latent_tokens:
@@ -62,18 +67,22 @@ class NovaLatentVideoModel(nn.Module):
         self.text_embedding = nn.Embedding(
             text_vocab_size, text_dim, padding_idx=0
         )
-        self.text_encoder = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(
-                d_model=text_dim,
-                nhead=4,
-                dim_feedforward=text_dim * 4,
-                batch_first=True,
-                norm_first=True,
-            ),
-            num_layers=2,
+        text_layer = nn.TransformerEncoderLayer(
+            d_model=text_dim,
+            nhead=4,
+            dim_feedforward=text_dim * 4,
+            batch_first=True,
+            norm_first=True,
         )
+        self.text_encoder = nn.TransformerEncoder(text_layer, num_layers=2)
+        self.text_projection = nn.Linear(text_dim, model_dim)
+
         self.time_embedding = SinusoidalTimeEmbedding(model_dim)
-        self.condition = nn.Linear(text_dim + model_dim, model_dim)
+        self.condition = nn.Sequential(
+            nn.Linear(text_dim + model_dim, model_dim * 2),
+            nn.SiLU(),
+            nn.Linear(model_dim * 2, model_dim),
+        )
 
         self.in_proj = nn.Conv3d(latent_channels, model_dim, 1)
         self.spatial_position = nn.Parameter(
@@ -103,7 +112,6 @@ class NovaLatentVideoModel(nn.Module):
         self.text_cross_attention = nn.MultiheadAttention(
             model_dim, num_heads, batch_first=True
         )
-        self.text_projection = nn.Linear(text_dim, model_dim)
 
         self.out_norm = nn.LayerNorm(model_dim)
         self.out_proj = nn.Linear(model_dim, latent_channels)
@@ -114,6 +122,15 @@ class NovaLatentVideoModel(nn.Module):
         text_ids: torch.Tensor,
         timesteps: torch.Tensor,
     ) -> torch.Tensor:
+        if latent.ndim != 5:
+            raise ValueError("Expected latent shape [B,C,T,H,W]")
+        if text_ids.ndim != 2:
+            raise ValueError("Expected text_ids shape [B,L]")
+        if latent.shape[0] != text_ids.shape[0]:
+            raise ValueError("Batch size mismatch between latent and text_ids")
+        if timesteps.shape != (latent.shape[0],):
+            raise ValueError("timesteps must have shape [B]")
+
         x = self.in_proj(latent)
         batch, dim, frames, height, width = x.shape
         if (
@@ -148,18 +165,19 @@ class NovaLatentVideoModel(nn.Module):
         text = self.text_encoder(text)
         text = self.text_projection(text)
         text_mask = text_ids.eq(0)
+
         tokens_flat = tokens.reshape(batch, frames * spatial_tokens, dim)
         attended, _ = self.text_cross_attention(
             tokens_flat, text, text, key_padding_mask=text_mask
         )
 
         time = self.time_embedding(timesteps)
-        pooled = self.text_embedding(text_ids)
+        raw_text = self.text_embedding(text_ids)
         mask = text_ids.ne(0).unsqueeze(-1)
-        pooled = (pooled * mask).sum(1) / mask.sum(1).clamp_min(1)
+        pooled = (raw_text * mask).sum(1) / mask.sum(1).clamp_min(1)
         cond = self.condition(torch.cat([pooled, time], dim=1))
-        attended = attended + cond.unsqueeze(1)
 
+        attended = attended + cond.unsqueeze(1)
         out = self.out_proj(self.out_norm(attended))
         return out.transpose(1, 2).reshape(
             batch, self.latent_channels, frames, height, width

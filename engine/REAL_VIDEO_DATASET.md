@@ -50,3 +50,34 @@ Do not download a dataset merely because it is publicly accessible. Before addin
 The first benchmark should prefer a small number of clearly documented clips over a large ambiguous corpus. If a source has attribution requirements, preserve them in the metadata and in any public documentation.
 
 The checksum manifest proves file identity/integrity only. It does not prove ownership, licensing, or permission to train.
+
+
+## Candidate source identified — Prelinger open-license subset
+
+A candidate source for the first real-video benchmark is the **Prelinger Archives open-license subset** published on Hugging Face by davanstrien.
+
+Source: https://huggingface.co/datasets/davanstrien/prelinger-archives-open
+
+The dataset description states that it contains videos filtered to Public Domain, CC0, CC BY, and CC BY-SA, excludes Non-Commercial licenses, and records the specific license for each video in metadata. The dataset is described as usable for research, machine learning, and creative projects.
+
+### NOVA gate before ingestion
+
+This source is a **candidate, not an automatic approval**. Before any clip enters `data/real/`, NOVA must record and manually verify:
+
+1. exact source video identifier;
+2. creator/rights holder when available;
+3. exact license URL and license type;
+4. permission for commercial use;
+5. permission for modification/processing;
+6. any attribution requirement;
+7. any non-copyright restrictions that could affect model training or product use;
+8. acquisition date and source URL;
+9. SHA-256 checksum after acquisition.
+
+Only individually verified clips should be copied into the training set and marked `training_rights_verified=true` in the project's provenance records.
+
+### First benchmark target
+
+Start with a very small manually reviewed subset (for example 10–20 clips) rather than downloading the full collection. The published dataset is much larger than what is needed for the first reconstruction experiment.
+
+This keeps the first real-data experiment cheap, auditable, and reversible while we validate the complete pipeline.

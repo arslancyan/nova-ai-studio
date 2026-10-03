@@ -1,10 +1,11 @@
-# NOVA API — v0.9
+# NOVA API — v0.9.1
 
 The API is the bridge between the static GitHub Pages studio and the native NOVA engine.
 
 ## Endpoints
 
 - GET /health — service state, schema version, native profile and readiness.
+- POST /v1/preflight — validate a shot before consuming a generation worker.
 - POST /v1/jobs — create a Creative Director generation job.
 - GET /v1/jobs/{job_id} — poll job state, progress and output URL.
 - POST /v1/images — deterministic development image preview.
@@ -52,6 +53,12 @@ The API never silently falls back from native inference to the preview renderer.
 Browser → NOVA API → persistent job queue → GPU worker → NOVA inference engine → object storage/CDN.
 
 The current API stores jobs in memory. It is a development integration, not a production multi-user service yet.
+
+## Continuity Engine
+
+Jobs can carry a continuity ID, shot index, continuity context and locked elements. The native prompt builder includes this context as structured conditioning text. This is an orchestration layer today; visual identity locking still requires a future reference-aware model.
+
+The /v1/preflight endpoint performs structural checks before rendering, including prompt quality, continuity context and native profile shape.
 
 ## Security note
 

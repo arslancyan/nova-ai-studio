@@ -70,5 +70,16 @@ CREATOR_DATASET.md, REAL_TRAINING_PROFILE.md, CREATOR_BENCHMARK_RESULTS_v0.2.md,
 and CREATOR_LATENT_16F_RESULTS.md.
 
 Native inference now supports both the original DDPM sampler and a deterministic
-DDIM-style sampler with a configurable number of sampling steps. This is a
-research feature; it does not imply production-quality generation.
+DDIM-style sampler with a configurable number of sampling steps. The current
+Creator-16F bridge is 16 frames at 64×64.
+
+The engine also has a Continuity Graph contract: each shot can carry a
+continuity ID, shot index, context and locked creative elements. A deterministic
+Shot DNA fingerprint makes the creative state addressable across revisions.
+This is orchestration/conditioning infrastructure today; it is not a claim that
+the current native checkpoint has learned visual identity locking.
+
+A dataset quality gate checks provenance completeness, source diversity, rights
+verification status and window concentration before training. These controls
+protect the research process from confusing many overlapping windows with many
+independent sources.

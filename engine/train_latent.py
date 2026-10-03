@@ -5,6 +5,7 @@ video model or proprietary generator is used.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import random
 from pathlib import Path

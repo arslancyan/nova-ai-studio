@@ -76,3 +76,31 @@ def render_preview(job_id: str, prompt: str, duration_seconds: int, aspect_ratio
         return str(output)
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
+
+def render_image(job_id: str, prompt: str, aspect_ratio: str = "16:9") -> str:
+    """Create a deterministic image preview for the secondary image workflow."""
+    width, height = WIDTHS.get(aspect_ratio, WIDTHS["16:9"])
+    seed = int(hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:8], 16)
+    image = Image.new("RGB", (width, height), (5, 8, 11))
+    draw = ImageDraw.Draw(image, "RGBA")
+    accent = (150 + seed % 90, 220, 70, 210)
+    cx = int(width * (0.5 + 0.12 * math.sin(seed))
+    )
+    cy = int(height * (0.45 + 0.10 * math.cos(seed * 0.7)))
+    radius = max(30, min(width, height) // 5)
+    for r in range(radius, 5, -5):
+        alpha = int(80 * (1 - r / radius))
+        draw.ellipse((cx-r, cy-r, cx+r, cy+r), fill=accent[:3] + (alpha,))
+    margin = max(18, min(width, height) // 12)
+    small_font = _font(max(14, min(width, height) // 30))
+    title_font = _font(max(22, min(width, height) // 12))
+    draw.text((margin, margin), "NOVA · IMAGE PREVIEW", font=title_font, fill=(220,255,160,235))
+    lines = _wrap(draw, prompt.strip(), small_font, width - 2 * margin)
+    y = height - margin - len(lines) * (small_font.size + 5)
+    draw.rectangle((0, y - 18, width, height), fill=(0,0,0,115))
+    for line in lines:
+        draw.text((margin, y), line, font=small_font, fill=(245,247,251,235))
+        y += small_font.size + 5
+    output = OUTPUT_DIR / f"{job_id}.png"
+    image.save(output, format="PNG", optimize=True)
+    return str(output)

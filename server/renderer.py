@@ -45,13 +45,15 @@ def render_preview(job_id: str, prompt: str, duration_seconds: int, aspect_ratio
     try:
         for i in range(frame_count):
             t = i / FPS; phase = t / max(duration, 1)
-            img = Image.new("RGB", (width, height), (5, 8, 11)); px = img.load()
-            for y in range(height):
-                for x in range(width):
-                    nx = x / max(width - 1, 1); ny = y / max(height - 1, 1)
+            bg_w = min(160, width); bg_h = max(1, int(bg_w * height / width))
+            bg = Image.new("RGB", (bg_w, bg_h), (5, 8, 11)); px = bg.load()
+            for y in range(bg_h):
+                for x in range(bg_w):
+                    nx = x / max(bg_w - 1, 1); ny = y / max(bg_h - 1, 1)
                     wave = math.sin(nx * 4.0 + phase * 2.2 + seed * 0.0001)
                     glow = max(0.0, 1.0 - math.hypot(nx - 0.52, ny - 0.43) * 1.7)
                     px[x, y] = (int(5 + 18 * glow + 7 * (wave + 1)), int(8 + 28 * glow), int(11 + 8 * (1 - ny) + 10 * glow))
+            img = bg.resize((width, height), Image.Resampling.BILINEAR)
             draw = ImageDraw.Draw(img, "RGBA")
             motion = {"slow dolly": 0.55, "orbit": 1.25, "handheld": 2.5, "crane up": 0.8}.get(camera.lower(), 0.9)
             cx = width * (0.5 + 0.24 * math.sin(phase * math.tau * motion))

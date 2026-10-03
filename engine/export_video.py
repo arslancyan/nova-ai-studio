@@ -20,6 +20,8 @@ def export_video(
     output_path: str,
     fps: int = 8,
 ) -> Path:
+    if fps <= 0:
+        raise ValueError("fps must be positive")
     video = torch.load(tensor_path, map_location="cpu", weights_only=True)
     if video.ndim == 5:
         if video.shape[0] != 1:

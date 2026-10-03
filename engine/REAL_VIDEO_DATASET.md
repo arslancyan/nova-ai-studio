@@ -41,3 +41,12 @@ The validation script checks documentation completeness; it does not make a lega
 ## Important
 
 Until real rights-safe videos are actually added, NOVA must continue using the synthetic dataset in CI. No copyrighted web video should be silently scraped into training.
+
+
+## Acquisition rule for the first real benchmark
+
+Do not download a dataset merely because it is publicly accessible. Before adding a source, record the exact license or written permission and manually confirm that the intended ML training and commercial product-development use is permitted or obtain explicit permission. Keep the original source URL and acquisition record in metadata.
+
+The first benchmark should prefer a small number of clearly documented clips over a large ambiguous corpus. If a source has attribution requirements, preserve them in the metadata and in any public documentation.
+
+The checksum manifest proves file identity/integrity only. It does not prove ownership, licensing, or permission to train.

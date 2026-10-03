@@ -20,6 +20,7 @@ def main():
         height=16,
         width=16,
     )
+    assert cfg.vocab_size == vocab_size()
     model = build_model(cfg)
     diffusion = GaussianDiffusion(cfg.timesteps)
 

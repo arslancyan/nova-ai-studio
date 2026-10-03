@@ -19,14 +19,20 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .renderer import render_image, render_preview
+from engine.capacity_profiles import get_capacity_profile
 
 NATIVE_ENABLED = os.getenv("NOVA_NATIVE_ENABLED", "0").lower() in {"1", "true", "yes"}
 NATIVE_AE_CHECKPOINT = os.getenv("NOVA_AE_CHECKPOINT", "checkpoints/nova_ae.pt")
 NATIVE_LATENT_CHECKPOINT = os.getenv("NOVA_LATENT_CHECKPOINT", "checkpoints/nova_latent.pt")
 NATIVE_FPS = os.getenv("NOVA_NATIVE_FPS")
 NATIVE_PROFILE = os.getenv("NOVA_NATIVE_PROFILE", "creator-16f-base")
+try:
+    _native_profile_spec = get_capacity_profile(NATIVE_PROFILE)
+except ValueError:
+    _native_profile_spec = get_capacity_profile("creator-16f-base")
+    NATIVE_PROFILE = _native_profile_spec.name
 
-VERSION = "0.9.0"
+VERSION = "0.9.1"
 OUTPUT_DIR = Path(os.getenv("NOVA_OUTPUT_DIR", "outputs"))
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 PUBLIC_BASE_URL = os.getenv("NOVA_PUBLIC_BASE_URL", "").rstrip("/")
@@ -174,6 +180,11 @@ def health():
         "renderer": "nova-native" if NATIVE_ENABLED else "nova-render-preview",
         "native_model": "enabled" if NATIVE_ENABLED else "disabled",
         "native_profile": NATIVE_PROFILE if NATIVE_ENABLED else None,
+        "native_shape": {
+            "frames": _native_profile_spec.output_frames,
+            "height": _native_profile_spec.output_height,
+            "width": _native_profile_spec.output_width,
+        } if NATIVE_ENABLED else None,
         "native_checkpoints": {
             "autoencoder": NATIVE_AE_CHECKPOINT,
             "latent": NATIVE_LATENT_CHECKPOINT,
@@ -225,8 +236,14 @@ def preflight(request: JobCreate):
         warnings.append("Later continuity shots should carry continuity context.")
     if request.sampler == "ddim" and request.sampling_steps is not None and request.sampling_steps > 100:
         warnings.append("DDIM above 100 steps is usually unnecessary for the current research profile.")
-    if NATIVE_ENABLED and (request.frames != 16 or request.height != 64 or request.width != 64):
-        errors.append("Creator-16F native profile requires 16 frames at 64×64.")
+    if NATIVE_ENABLED:
+        expected = (_native_profile_spec.output_frames, _native_profile_spec.output_height, _native_profile_spec.output_width)
+        actual = (request.frames, request.height, request.width)
+        if actual != expected:
+            errors.append(
+                f"{NATIVE_PROFILE} requires {expected[0]} frames at "
+                f"{expected[1]}×{expected[2]}."
+            )
     return {
         "ok": not errors,
         "errors": errors,

@@ -1,0 +1,27 @@
+{
+  "schema_version": "0.1",
+  "project_name": "NOVA Native Test",
+  "prompt": "A red circle moving through a dark cinematic scene",
+  "model": "nova-cinematic",
+  "duration_seconds": 1,
+  "aspect_ratio": "16:9",
+  "camera": "slow dolly",
+  "reference_mode": "none",
+  "quality": "draft",
+  "seed": 42,
+  "frames": 8,
+  "height": 32,
+  "width": 32,
+  "timesteps": 1000,
+  "fps": 8,
+  "director": {
+    "subject": "a red circle",
+    "action": "moving smoothly through the frame",
+    "environment": "a dark cinematic scene",
+    "camera_movement": "slow dolly",
+    "lighting": "soft blue rim light",
+    "style": "minimal cinematic digital art",
+    "motion": "subtle",
+    "negative_prompt": "blurry, distorted, low quality"
+  }
+}

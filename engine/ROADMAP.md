@@ -17,6 +17,7 @@
 - [x] Best-checkpoint persistence and training metadata
 - [x] Autoencoder architecture smoke test
 - [ ] Train first synthetic reconstruction checkpoint (GPU quality run)
+- [x] Creator-window 16-frame reconstruction experiment (49 windows from 4 sources)
 - [ ] Benchmark first rights-safe real-video reconstruction checkpoint
 - [x] Run first local creator-owned reconstruction benchmark (4 creator-owned clips; 3 animation + 1 live-action)
 - [x] Tiny CPU training profile for end-to-end native pipeline validation
@@ -64,7 +65,7 @@
 - [ ] Dynamic positional encoding
 - [x] Efficient attention
 - [x] Stronger text conditioning
-- [ ] Better sampling / scheduler comparison
+- [x] Better sampling / scheduler comparison (DDIM-style deterministic path added)
 - [ ] Image/reference conditioning
 
 ## Stage 4 — Product engine

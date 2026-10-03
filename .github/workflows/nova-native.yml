@@ -57,6 +57,9 @@ jobs:
       - name: Native prompt conditioning regression
         run: python -m engine.prompt_conditioning_test
 
+      - name: DDIM sampler regression
+        run: python -m engine.ddim_sampler_test
+
       - name: Latent model smoke test
         run: python -m engine.latent_smoke_test
 

@@ -231,4 +231,35 @@ def train(
 
 
 if __name__ == "__main__":
-    train()
+    parser = argparse.ArgumentParser(description="Train the native NOVA latent denoiser")
+    parser.add_argument("--data-root", default="data/synthetic")
+    parser.add_argument("--autoencoder-checkpoint", default="checkpoints/nova_ae.pt")
+    parser.add_argument("--epochs", type=int, default=5)
+    parser.add_argument("--batch-size", type=int, default=8)
+    parser.add_argument("--lr", type=float, default=2e-4)
+    parser.add_argument("--val-fraction", type=float, default=0.1)
+    parser.add_argument("--seed", type=int, default=7)
+    parser.add_argument("--out", default="checkpoints/nova_latent.pt")
+    parser.add_argument("--resume", default=None)
+    parser.add_argument("--history-out", default="checkpoints/nova_latent_history.jsonl")
+    parser.add_argument("--model-dim", type=int, default=128)
+    parser.add_argument("--num-heads", type=int, default=4)
+    parser.add_argument("--num-layers", type=int, default=4)
+    parser.add_argument("--diffusion-steps", type=int, default=1000)
+    args = parser.parse_args()
+    train(
+        data_root=args.data_root,
+        autoencoder_checkpoint=args.autoencoder_checkpoint,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        lr=args.lr,
+        val_fraction=args.val_fraction,
+        seed=args.seed,
+        out=args.out,
+        resume=args.resume,
+        history_out=args.history_out,
+        model_dim=args.model_dim,
+        num_heads=args.num_heads,
+        num_layers=args.num_layers,
+        diffusion_steps=args.diffusion_steps,
+    )

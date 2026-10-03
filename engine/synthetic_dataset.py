@@ -24,7 +24,7 @@ def make_clip(frames=8,height=32,width=32,seed=0):
     for t in range(frames):
         cx=max(size,min(width-size-1,x0+vx*t)); cy=max(size,min(height-size-1,y0+vy*t))
         if shape=="circle": mask=(xx-cx)**2+(yy-cy)**2<=size**2
-        else: mask=(xx-cx).abs()<=size & (yy-cy).abs()<=size
+        else: mask=((xx-cx).abs()<=size) & ((yy-cy).abs()<=size)
         clip[:,t][mask]=color[:,0,0].view(3,1)
     return clip*2-1, f"a {color_name} {shape} moving in a dark scene"
 

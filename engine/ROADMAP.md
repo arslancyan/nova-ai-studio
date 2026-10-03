@@ -50,6 +50,7 @@
 - [x] Train first tiny latent diffusion checkpoint through the CPU Micro profile
 - [ ] Train first quality latent diffusion checkpoint (larger compute)
 - [x] Run creator-owned CPU latent micro benchmark on four local clips
+- [x] Run creator-owned 16-frame latent bridge benchmark (45 train / 4 held-out windows)
 - [x] Loss curves
 - [x] Reproducible seed
 - [x] Validation loss / checkpoint metadata

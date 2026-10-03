@@ -67,6 +67,7 @@ def train(
     resume=None,
     history_out="checkpoints/nova_latent_history.jsonl",
     model_dim=128,
+    text_dim=128,
     num_heads=4,
     num_layers=4,
     diffusion_steps=1000,
@@ -125,6 +126,7 @@ def train(
         latent_height=latent_height,
         latent_width=latent_width,
         model_dim=model_dim,
+        text_dim=text_dim,
         num_heads=num_heads,
         num_layers=num_layers,
     ).to(device)
@@ -252,6 +254,7 @@ def train(
                         "best_val": best_val,
                         "seed": seed,
                         "model_dim": model_dim,
+                        "text_dim": text_dim,
                         "num_heads": num_heads,
                         "num_layers": num_layers,
                         "diffusion_steps": diffusion_steps,
@@ -272,6 +275,7 @@ def train(
                 "best_val": best_val,
                 "seed": seed,
                 "model_dim": model_dim,
+                "text_dim": text_dim,
                 "num_heads": num_heads,
                 "num_layers": num_layers,
                 "diffusion_steps": diffusion_steps,
@@ -300,6 +304,7 @@ if __name__ == "__main__":
     parser.add_argument("--resume", default=None)
     parser.add_argument("--history-out", default="checkpoints/nova_latent_history.jsonl")
     parser.add_argument("--model-dim", type=int, default=128)
+    parser.add_argument("--text-dim", type=int, default=128)
     parser.add_argument("--num-heads", type=int, default=4)
     parser.add_argument("--num-layers", type=int, default=4)
     parser.add_argument("--diffusion-steps", type=int, default=1000)
@@ -318,6 +323,7 @@ if __name__ == "__main__":
         resume=args.resume,
         history_out=args.history_out,
         model_dim=args.model_dim,
+        text_dim=args.text_dim,
         num_heads=args.num_heads,
         num_layers=args.num_layers,
         diffusion_steps=args.diffusion_steps,

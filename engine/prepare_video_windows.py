@@ -153,8 +153,14 @@ def prepare(
             raise FileNotFoundError(source)
 
         total = duration(source)
+        if total <= 0:
+            raise ValueError(f"{source}: ffprobe returned a non-positive duration")
         if total < window_seconds:
-            starts = [0.0]
+            raise ValueError(
+                f"{source}: duration {total:.3f}s is shorter than "
+                f"window_seconds={window_seconds:.3f}; use a shorter window "
+                "or exclude this source."
+            )
         else:
             count = min(
                 max_windows_per_source,

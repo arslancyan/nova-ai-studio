@@ -25,7 +25,7 @@
 - [ ] Normalize clips
 - [ ] Caption clips
 - [ ] Train/validation split
-- [ ] Dataset checksum manifest
+- [x] Dataset checksum manifest
 
 ## Stage 2 — NOVA latent diffusion
 - [x] Native latent denoiser architecture
@@ -36,13 +36,14 @@
 - [x] Reproducible seed
 - [x] Validation loss / checkpoint metadata
 - [ ] Sample generation through the trained autoencoder
+- [x] Native tensor-to-MP4 export boundary
 
 ## Stage 3 — Improve the architecture
 - [x] Factorized spatial/temporal attention
 - [ ] Learned/dynamic positional encoding
 - [x] Efficient attention
 - [x] Stronger text conditioning
-- [ ] Better sampling
+- [ ] Better sampling / scheduler comparison
 - [ ] Image/reference conditioning
 
 ## Stage 4 — Product engine

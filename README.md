@@ -1,6 +1,6 @@
 # NOVA — AI Video Studio
 
-**Current release: v0.4 — API + native-engine foundation**
+**Current release: v0.5 — live MP4 render pipeline + native-engine foundation**
 
 NOVA is an independent AI-video product prototype.
 
@@ -18,15 +18,18 @@ The long-term goal is a proprietary AI-video stack. Third-party/open-source comp
 ## v0.4 additions
 - Backend job API contract in `server/`
 - Development job lifecycle: queued / rendering / complete / failed
+- Real MP4 render-preview worker and downloadable output
+- Docker backend with ffmpeg
 - Dataset provenance manifest validator
 - Clear separation between static GitHub Pages UI and future GPU backend
 
 ## Next engineering milestones
-1. Authentication + projects
-2. Credits and billing
-3. Job queue
-4. Model adapter interface
-5. First commercially permitted inference engine
-6. Reference-image consistency pipeline
-7. Video post-processing/upscale
-8. Replace/augment components with proprietary NOVA models over time
+1. Deploy the NOVA backend and connect the live frontend
+2. Authentication + projects
+3. Credits and billing
+4. Job queue
+5. Model adapter interface
+6. First commercially permitted inference engine
+7. Reference-image consistency pipeline
+8. Video post-processing/upscale
+9. Replace/augment components with proprietary NOVA models over time

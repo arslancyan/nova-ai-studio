@@ -118,6 +118,7 @@ def train(
 
         train_loss = train_total / max(1, len(loader))
         val_loss = val_total / max(1, len(val_loader))
+        improved = val_loss < best_val
         best_val = min(best_val, val_loss)
 
         record = {
@@ -148,7 +149,7 @@ def train(
             },
         }
         torch.save(checkpoint, out_path)
-        if val_loss <= best_val + 1e-12:
+        if improved:
             torch.save(checkpoint, out_path.with_name(out_path.stem + ".best" + out_path.suffix))
         print(
             f"epoch={epoch + 1} train_loss={train_loss:.6f} "

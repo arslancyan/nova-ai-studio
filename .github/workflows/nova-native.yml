@@ -39,6 +39,18 @@ jobs:
           name: nova-native-ci-checkpoint
           path: checkpoints/ci_nova_ae.pt
 
+      - name: NOVA Micro CPU learning profile
+        run: python -m engine.micro_profile
+
+      - name: Upload NOVA Micro checkpoints
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-micro-checkpoints
+          path: |
+            checkpoints/nova_micro_ae.pt
+            checkpoints/nova_micro_latent.pt
+            checkpoints/nova_micro_latent_history.jsonl
+
       - name: Latent model smoke test
         run: python -m engine.latent_smoke_test
 

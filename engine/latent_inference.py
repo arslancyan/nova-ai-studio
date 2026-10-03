@@ -28,6 +28,8 @@ def generate(
     width=32,
     timesteps=1000,
     seed=0,
+    sampler="ddpm",
+    sampling_steps=None,
 ):
     if frames < 4 or height < 4 or width < 4:
         raise ValueError("frames/height/width must be at least 4")
@@ -94,9 +96,23 @@ def generate(
         generator=generator,
     )
 
-    for step in reversed(range(timesteps)):
-        t = torch.full((1,), step, device=device, dtype=torch.long)
-        x = diffusion.step(model, x, text_ids, t)
+    if sampler not in {"ddpm", "ddim"}:
+        raise ValueError("sampler must be ddpm or ddim")
+    if sampling_steps is None:
+        sampling_steps = timesteps if sampler == "ddpm" else min(50, timesteps)
+    sampling_steps = max(2, min(int(sampling_steps), timesteps))
+    if sampler == "ddpm":
+        schedule = list(range(timesteps - 1, -1, -1))
+    else:
+        schedule = torch.linspace(timesteps - 1, 0, sampling_steps, device=device).round().long().tolist()
+    for index, step in enumerate(schedule):
+        t = torch.full((1,), int(step), device=device, dtype=torch.long)
+        if sampler == "ddim":
+            prev_step = int(schedule[index + 1]) if index + 1 < len(schedule) else 0
+            prev_t = torch.full((1,), prev_step, device=device, dtype=torch.long)
+            x = diffusion.ddim_step(model, x, text_ids, t, prev_t, eta=0.0)
+        else:
+            x = diffusion.step(model, x, text_ids, t)
 
     video = autoencoder.decode(x).clamp(-1, 1)
     output_path = Path(output)
@@ -152,6 +168,8 @@ def generate_job(job: dict, output="outputs/nova_native.pt"):
         width=int(job.get("width", 32)),
         timesteps=int(job.get("timesteps", 1000)),
         seed=seed,
+        sampler=str(job.get("sampler", "ddpm")),
+        sampling_steps=job.get("sampling_steps"),
     )
 
 
@@ -166,6 +184,8 @@ def main():
     parser.add_argument("--width", type=int, default=32)
     parser.add_argument("--timesteps", type=int, default=1000)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--sampler", choices=["ddpm","ddim"], default="ddpm")
+    parser.add_argument("--sampling-steps", type=int, default=None)
     args = parser.parse_args()
     path = generate(
         args.autoencoder,
@@ -177,6 +197,8 @@ def main():
         args.width,
         args.timesteps,
         args.seed,
+        args.sampler,
+        args.sampling_steps,
     )
     print(f"saved {path}")
 

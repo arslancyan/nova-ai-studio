@@ -29,5 +29,13 @@ jobs:
         run: python -c "from server.app import app; print(app.title, app.version)"
       - name: Run native autoencoder smoke test
         run: python -m engine.autoencoder_smoke_test
+      - name: Run native latent denoiser smoke test
+        run: python -m engine.latent_smoke_test
       - name: Generate synthetic training sample
-        run: python -m engine.synthetic_dataset --samples 8 --output /tmp/nova-synthetic
+        run: python -m engine.synthetic_dataset --samples 16 --output /tmp/nova-synthetic
+      - name: Validate synthetic training sample
+        run: python -m engine.validate_synthetic --root /tmp/nova-synthetic
+      - name: Train one native autoencoder epoch
+        run: python -m engine.train_autoencoder --root /tmp/nova-synthetic --epochs 1 --batch-size 4 --out /tmp/nova-ae.pt
+      - name: Evaluate native autoencoder checkpoint
+        run: python -m engine.evaluate_autoencoder --root /tmp/nova-synthetic --checkpoint /tmp/nova-ae.pt --batch-size 4

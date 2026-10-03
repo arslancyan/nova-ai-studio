@@ -14,33 +14,39 @@
 - [x] Random-init 3D video autoencoder
 - [x] Rights-safe synthetic dataset generator
 - [x] Autoencoder training entry point
+- [x] Autoencoder architecture smoke test
 - [ ] Train first synthetic reconstruction checkpoint
+- [ ] Measure reconstruction quality on held-out synthetic clips
 
-## Stage 1B — Data
-- [ ] Establish a small, documented dataset
-- [ ] Validate every source license/permission
+## Stage 1B — Data foundation
+- [x] Synthetic dataset path
+- [ ] Establish a small, documented real-video dataset
+- [ ] Validate every real source license/permission
 - [ ] Normalize clips
 - [ ] Caption clips
 - [ ] Train/validation split
 - [ ] Dataset checksum manifest
 
-## Stage 2 — NOVA latent diffusion training
-- [ ] First real checkpoint
+## Stage 2 — NOVA latent diffusion
+- [x] Native latent denoiser architecture
+- [x] Latent diffusion training entry point
+- [x] Latent denoiser smoke test
+- [ ] Train first latent diffusion checkpoint
 - [ ] Loss curves
 - [ ] Reproducible seed
 - [ ] Evaluation report
-- [ ] Sample generation
+- [ ] Sample generation through the trained autoencoder
 
 ## Stage 3 — Improve the architecture
 - [ ] Better temporal blocks
-- [ ] Latent representation
+- [ ] Learned/dynamic positional encoding
 - [ ] Efficient attention
 - [ ] Stronger text conditioning
 - [ ] Better sampling
 - [ ] Image/reference conditioning
 
 ## Stage 4 — Product engine
-- [ ] NOVA inference API
+- [ ] NOVA native inference API
 - [ ] GPU worker
 - [ ] Job queue
 - [ ] Object storage

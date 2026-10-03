@@ -24,9 +24,10 @@
 - [x] Synthetic dataset path
 - [ ] Establish a small, documented real-video dataset
 - [ ] Validate every real source license/permission
-- [ ] Normalize clips
-- [ ] Caption clips
-- [ ] Train/validation split
+- [x] Normalize clips
+- [x] Caption metadata field
+- [x] Train/validation split
+- [x] Real-video autoencoder training entry point
 - [x] Dataset checksum manifest
 
 ## Stage 2 — NOVA latent diffusion

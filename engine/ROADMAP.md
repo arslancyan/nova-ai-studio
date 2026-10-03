@@ -27,6 +27,7 @@
 ## Stage 1B — Data foundation
 - [x] Synthetic dataset path
 - [ ] Establish a small, documented real-video dataset
+- [x] Identify a candidate open-license source for the first real-video benchmark (manual per-clip verification still required)
 - [ ] Validate every real source license/permission
 - [x] Normalize clips
 - [x] Caption metadata field

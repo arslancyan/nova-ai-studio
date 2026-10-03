@@ -45,7 +45,7 @@ class PreparedVideoDataset(Dataset):
         ).float()
         if video.ndim != 4 or video.shape[0] != 3:
             raise ValueError(f"{row['sample_id']}: expected [3,T,H,W]")
-        return video, row["caption"], row.get("sample_id", "unknown")
+        return video, row["caption"], row.get("source_id") or row.get("sample_id", "unknown")
 
 
 def load_prepared_csv(train_csv, val_csv):

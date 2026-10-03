@@ -59,3 +59,16 @@ The runner requires trained NOVA autoencoder and latent checkpoints. It does **n
 Creative Director JSON → native prompt conditioning → latent diffusion → native autoencoder decode → MP4 export.
 
 The included example is a schema/integration fixture, not a claim of trained-model quality.
+
+
+## Current creator-owned research path
+
+The current local benchmark path can use four creator-owned source videos,
+extract 4-second overlapping windows, and train a 16-frame 64x64
+random-initialized autoencoder before latent diffusion. See
+CREATOR_DATASET.md, REAL_TRAINING_PROFILE.md, CREATOR_BENCHMARK_RESULTS_v0.2.md,
+and CREATOR_LATENT_16F_RESULTS.md.
+
+Native inference now supports both the original DDPM sampler and a deterministic
+DDIM-style sampler with a configurable number of sampling steps. This is a
+research feature; it does not imply production-quality generation.

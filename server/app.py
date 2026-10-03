@@ -5,9 +5,20 @@ from enum import Enum
 from threading import Lock
 from uuid import uuid4
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+import os
 from pydantic import BaseModel, Field
 
 app = FastAPI(title="NOVA API", version="0.4.0")
+
+allowed_origins = [x.strip() for x in os.getenv("NOVA_ALLOWED_ORIGINS", "*").split(",") if x.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
+)
 
 class JobState(str, Enum):
     queued = "queued"

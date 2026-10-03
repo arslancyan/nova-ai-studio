@@ -71,6 +71,7 @@ def generate(
         latent_height=latent_height,
         latent_width=latent_width,
         model_dim=int(latent_pack.get("model_dim", 128)),
+        text_dim=int(latent_pack.get("text_dim", latent_pack.get("model_dim", 128))),
         num_heads=int(latent_pack.get("num_heads", 4)),
         num_layers=int(latent_pack.get("num_layers", 4)),
     ).to(device)

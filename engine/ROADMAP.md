@@ -15,7 +15,8 @@
 - [x] Rights-safe synthetic dataset generator
 - [x] Autoencoder training entry point
 - [x] Autoencoder architecture smoke test
-- [ ] Train first synthetic reconstruction checkpoint
+- [ ] Train first synthetic reconstruction checkpoint (GPU quality run)
+- [x] Tiny CPU training profile for end-to-end native pipeline validation
 - [ ] Measure reconstruction quality on held-out synthetic clips
 
 ## Stage 1B — Data foundation
@@ -35,12 +36,14 @@
 - [x] Loss curves
 - [x] Reproducible seed
 - [x] Validation loss / checkpoint metadata
-- [ ] Sample generation through the trained autoencoder
+- [x] Sample generation through the trained autoencoder (tiny validation profile)
+- [ ] Production-quality sample generation from a trained checkpoint
 - [x] Native tensor-to-MP4 export boundary
 
 ## Stage 3 — Improve the architecture
 - [x] Factorized spatial/temporal attention
-- [ ] Learned/dynamic positional encoding
+- [x] Learned positional encoding
+- [ ] Dynamic positional encoding
 - [x] Efficient attention
 - [x] Stronger text conditioning
 - [ ] Better sampling / scheduler comparison

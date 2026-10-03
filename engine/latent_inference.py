@@ -70,11 +70,17 @@ def generate(
         latent_frames=latent_frames,
         latent_height=latent_height,
         latent_width=latent_width,
+        model_dim=int(latent_pack.get("model_dim", 128)),
+        num_heads=int(latent_pack.get("num_heads", 4)),
+        num_layers=int(latent_pack.get("num_layers", 4)),
     ).to(device)
     model.load_state_dict(latent_pack["state_dict"])
     model.eval()
 
     text_ids = torch.tensor([encode(prompt)], device=device)
+    trained_timesteps = int(latent_pack.get("diffusion_steps", timesteps))
+    if timesteps != trained_timesteps:
+        timesteps = trained_timesteps
     diffusion = GaussianDiffusion(timesteps)
 
     x = torch.randn(

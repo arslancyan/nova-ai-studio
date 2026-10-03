@@ -20,6 +20,7 @@
 - [ ] Benchmark first rights-safe real-video reconstruction checkpoint
 - [x] Tiny CPU training profile for end-to-end native pipeline validation
 - [x] CI executes a tiny random-init training profile and preserves its checkpoint artifact
+- [x] CPU-first NOVA Micro profile (AE + latent diffusion)
 - [x] Measure reconstruction quality on held-out synthetic clips
 
 ## Stage 1B — Data foundation
@@ -40,7 +41,8 @@
 - [x] Latent diffusion training entry point
 - [x] Prepared real-video CSV input path for latent training
 - [x] Latent denoiser smoke test
-- [ ] Train first latent diffusion checkpoint (requires real compute)
+- [x] Train first tiny latent diffusion checkpoint through the CPU Micro profile
+- [ ] Train first quality latent diffusion checkpoint (larger compute)
 - [x] Loss curves
 - [x] Reproducible seed
 - [x] Validation loss / checkpoint metadata
@@ -66,6 +68,10 @@
 - [ ] User credit accounting
 - [ ] Safety and abuse controls
 
+
+## Compute simplification
+- [x] Separate CPU Micro research profile from GPU Scale profile
+- [x] Make GPU a quality/scaling accelerator rather than a prerequisite for every engineering step
 
 ## 60-Day execution target
 - [x] Days 1–15 foundation: native representation learning, deterministic tests, real-video ingestion and provenance gates

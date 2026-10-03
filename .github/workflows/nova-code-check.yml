@@ -33,6 +33,8 @@ jobs:
         run: python -m engine.autoencoder_learning_test
       - name: Run native latent denoiser smoke test
         run: python -m engine.latent_smoke_test
+      - name: Run native latent learning regression test
+        run: python -m engine.latent_learning_test
       - name: Generate synthetic training sample
         run: python -m engine.synthetic_dataset --samples 16 --output /tmp/nova-synthetic
       - name: Validate synthetic training sample

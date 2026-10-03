@@ -28,7 +28,7 @@ jobs:
         run: python -m engine.validate_synthetic
 
       - name: Native capacity profile regression
-        run: pytest -q engine/capacity_profile_test.py
+        run: pytest -q engine/capacity_profile_test.py engine/dataset_quality_test.py
 
       - name: Native autoencoder smoke test
         run: python -m engine.autoencoder_smoke_test

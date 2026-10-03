@@ -29,10 +29,13 @@
 - [x] Train/validation split
 - [x] Real-video autoencoder training entry point
 - [x] Dataset checksum manifest
+- [x] Real-video metadata/provenance validator
+- [x] End-to-end real-video preparation smoke test (CI-generated media)
 
 ## Stage 2 — NOVA latent diffusion
 - [x] Native latent denoiser architecture
 - [x] Latent diffusion training entry point
+- [x] Prepared real-video CSV input path for latent training
 - [x] Latent denoiser smoke test
 - [ ] Train first latent diffusion checkpoint (requires real compute)
 - [x] Loss curves
@@ -59,3 +62,10 @@
 - [ ] Admin unlimited credits
 - [ ] User credit accounting
 - [ ] Safety and abuse controls
+
+
+## 60-Day execution target
+- [x] Days 1–15 foundation: native representation learning, deterministic tests, real-video ingestion and provenance gates
+- [ ] Days 16–30: first rights-safe real-video reconstruction checkpoint and reconstruction benchmark
+- [ ] Days 31–45: first meaningful native text-conditioned latent generation on real data
+- [ ] Days 46–60: stable native demo path, temporal consistency benchmark, reference-conditioning experiment

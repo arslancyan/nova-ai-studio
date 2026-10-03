@@ -112,12 +112,18 @@ def train(
     with torch.no_grad():
         sample_latent = autoencoder.encode(clips[:1].to(device))
     latent_channels = sample_latent.shape[1]
-    latent_tokens = sample_latent[0].numel() // latent_channels
+    latent_frames = sample_latent.shape[2]
+    latent_height = sample_latent.shape[3]
+    latent_width = sample_latent.shape[4]
+    latent_tokens = latent_frames * latent_height * latent_width
 
     model = build_latent_model(
         latent_channels=latent_channels,
         text_vocab_size=vocab_size(),
         latent_tokens=latent_tokens,
+        latent_frames=latent_frames,
+        latent_height=latent_height,
+        latent_width=latent_width,
         model_dim=model_dim,
         num_heads=num_heads,
         num_layers=num_layers,

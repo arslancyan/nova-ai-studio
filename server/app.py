@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .renderer import render_preview
+from .renderer import render_image, render_preview
 
 VERSION = "0.5.0"
 OUTPUT_DIR = Path(os.getenv("NOVA_OUTPUT_DIR", "outputs"))
@@ -107,6 +107,29 @@ def create_job(request: JobCreate):
         _jobs[job.id] = job
     _executor.submit(_render_job, job.id, request)
     return job
+
+
+class ImageCreate(BaseModel):
+    prompt: str = Field(min_length=1, max_length=4000)
+    aspect_ratio: str = "16:9"
+
+class ImageResult(BaseModel):
+    output_url: str
+
+@app.post("/v1/images", response_model=ImageResult)
+def create_image(request: ImageCreate):
+    image_id = str(uuid4())
+    try:
+        output = render_image(
+            job_id=image_id,
+            prompt=request.prompt,
+            aspect_ratio=request.aspect_ratio,
+        )
+        relative = f"/outputs/{Path(output).name}"
+        output_url = f"{PUBLIC_BASE_URL}{relative}" if PUBLIC_BASE_URL else relative
+        return ImageResult(output_url=output_url)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
 
 @app.get("/v1/jobs/{job_id}", response_model=Job)
 def get_job(job_id: str):

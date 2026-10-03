@@ -39,7 +39,11 @@ jobs:
         run: python -m engine.synthetic_dataset --samples 16 --output /tmp/nova-synthetic
       - name: Validate synthetic training sample
         run: python -m engine.validate_synthetic --root /tmp/nova-synthetic
+      - name: Build dataset checksum manifest
+        run: python -m engine.dataset_manifest --root /tmp/nova-synthetic --output /tmp/nova-manifest.json
       - name: Train one native autoencoder epoch
         run: python -m engine.train_autoencoder --root /tmp/nova-synthetic --epochs 1 --batch-size 4 --out /tmp/nova-ae.pt
       - name: Evaluate native autoencoder checkpoint
         run: python -m engine.evaluate_autoencoder --root /tmp/nova-synthetic --checkpoint /tmp/nova-ae.pt --batch-size 4
+      - name: Compile native exporter
+        run: python -m compileall -q engine/export_video.py

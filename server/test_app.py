@@ -13,7 +13,6 @@ def test_health_reports_native_state():
     assert data["ok"] is True
     assert data["job_schema"] == "0.9"
     assert data["native_profile"] == "creator-16f-base"
-    assert data["native_profile"] == "creator-16f-base"
     assert data["version"] == "0.9.1"
     assert "native_ready" in data
 

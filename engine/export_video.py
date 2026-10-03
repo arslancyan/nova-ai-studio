@@ -40,8 +40,11 @@ def export_video(
 
     try:
         for index, frame in enumerate(frames):
-            pixels = ((frame + 1.0) * 127.5).round().byte().numpy()
-            Image.fromarray(pixels, "RGB").save(
+            pixels = ((frame + 1.0) * 127.5).round().byte().contiguous()
+            height, width = pixels.shape[:2]
+            # Keep the exporter NumPy-free so minimal CI/worker images can export MP4.
+            raw_rgb = bytes(pixels.view(-1).tolist())
+            Image.frombytes("RGB", (width, height), raw_rgb).save(
                 workdir / f"frame_{index:05d}.png"
             )
 

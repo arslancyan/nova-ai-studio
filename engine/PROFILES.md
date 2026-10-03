@@ -37,3 +37,24 @@ building NOVA's native software and research pipeline.
 Do not spend time waiting for hardware. Every new model component should
 first be testable through Micro. Only promote a component to Scale after the
 Micro regression is useful.
+
+
+## Creator-16F — CPU/GPU bridge
+
+The first real-data bridge profile uses the creator-owned source videos:
+
+- 4-second windows
+- 2-second stride
+- up to 24 windows per source
+- 16 frames
+- 64x64 pixels
+- one held-out window per source
+- random-init autoencoder
+- latent diffusion after reconstruction is validated
+
+The current benchmark produced 49 windows from 4 source videos (45 train, 4
+held out). Window count is not source count: the four originals remain the
+actual independent sources.
+
+Purpose: measure real-video reconstruction and temporal behavior before paying
+for larger GPU training.

@@ -48,11 +48,13 @@
 - [x] Latent denoiser smoke test
 - [x] Train first tiny latent diffusion checkpoint through the CPU Micro profile
 - [ ] Train first quality latent diffusion checkpoint (larger compute)
+- [x] Run creator-owned CPU latent micro benchmark on four local clips
 - [x] Loss curves
 - [x] Reproducible seed
 - [x] Validation loss / checkpoint metadata
 - [x] Sample generation through the trained autoencoder (tiny validation profile)
 - [x] Prompt-conditioning regression with same-seed prompt separation
+- [x] Creator-owned latent prompt-conditioning regression
 - [ ] Production-quality sample generation from a trained checkpoint
 - [x] Native tensor-to-MP4 export boundary
 

@@ -212,7 +212,19 @@ async function generate(){
         aspect_ratio:document.getElementById('aspect').value.split(' ')[0],
         camera:document.getElementById('camera').value.toLowerCase().replace(/\s+/g,' '),
         reference_mode:document.getElementById('reference').value.toLowerCase().replace(/\s+/g,'-'),
-        quality:document.getElementById('quality').value.toLowerCase()
+        quality:document.getElementById('quality').value.toLowerCase(),
+        project_name:document.getElementById('projectName').value.trim()||'Untitled NOVA project',
+        seed:document.getElementById('seed').value.trim()?Number(document.getElementById('seed').value):null,
+        director:{
+          subject:document.getElementById('directorSubject').value.trim(),
+          action:document.getElementById('directorAction').value.trim(),
+          environment:document.getElementById('directorEnvironment').value.trim(),
+          camera_movement:document.getElementById('motionCamera').value.toLowerCase(),
+          lighting:document.getElementById('directorStyle').value.trim(),
+          style:document.getElementById('directorStyle').value.trim(),
+          motion:document.getElementById('motion').value.toLowerCase(),
+          negative_prompt:document.getElementById('negativePrompt').value.trim()
+        }
       };
       const response=await fetch(base+'/v1/jobs',{
         method:'POST',

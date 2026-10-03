@@ -203,7 +203,7 @@ async function generate(){
       setProgress(100,'Demo complete · no AI render executed','Demo mode only — no native model output was generated.'); updateQueue(queueId,'READY','Demo pipeline complete');
       t.innerHTML='<b>DEMO PIPELINE</b><br><br>'+escapeHtml(p.slice(0,130));
       await new Promise(r=>setTimeout(r,800));
-      projects.unshift({title:p.slice(0,55),prompt:p,date:new Date().toLocaleString(),model:document.getElementById('model').value,duration:document.getElementById('duration').value,aspect:document.getElementById('aspect').value.split(' ')[0],camera:document.getElementById('camera').value,mode:'demo'});
+      recordGeneration(null,'demo');
     }else{
       const duration=parseInt(document.getElementById('duration').value,10)||5;
       const body={
@@ -256,7 +256,7 @@ async function generate(){
       const output=done.output_url&&/^https?:\/\//i.test(done.output_url)?done.output_url:base+String(done.output_url||'');
       setPreview(output);
       s.textContent='NOVA render complete · MP4 ready';
-      projects.unshift({title:p.slice(0,55),prompt:p,date:new Date().toLocaleString(),model:document.getElementById('model').value,duration:document.getElementById('duration').value,aspect:document.getElementById('aspect').value.split(' ')[0],camera:document.getElementById('camera').value,mode:'render',output});
+      recordGeneration(output,'render');
     }
     projects=projects.slice(0,8); saveProjects();
   }catch(error){
@@ -327,6 +327,19 @@ function renderProjects(){
     const details=[x.model,x.duration,x.aspect,x.camera].filter(Boolean).join(' · ');
     return '<div class="projectrow"><div class="project-main"><b class="project-title">'+escapeHtml(String(x.title||''))+'</b><div class="project-meta">'+escapeHtml(details||'NOVA project')+' · '+escapeHtml(String(x.date||''))+'</div></div><div class="project-actions"><span class="tag">'+escapeHtml(String(x.mode||'DEMO').toUpperCase())+'</span>'+(x.output?'<button class="btn" onclick="openProjectOutput('+i+')">Open</button>':'')+'<button class="btn" onclick="reuseProject('+i+')">Reuse</button></div></div>'
   }).join(''):'<div style="color:var(--muted);padding:20px 0">No projects yet. Your generated shots will appear here.</div>';
+}
+function recordGeneration(output,mode){
+  const data=workspaceData();
+  data.title=data.prompt.slice(0,55)||data.name;
+  data.date=new Date().toLocaleString();
+  data.mode=mode;
+  if(output)data.output=output;
+  const idx=projects.findIndex(x=>x.id===data.id);
+  if(idx>=0)projects[idx]={...projects[idx],...data};
+  else projects.unshift(data);
+  projects=projects.slice(0,20);
+  saveProjects();
+  renderProjects();
 }
 function downloadDemo(){
   if(!currentOutput){alert('Generate a video first.');return}

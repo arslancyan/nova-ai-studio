@@ -44,6 +44,7 @@ def test_job_contract_accepts_director_and_sampler():
     assert data["request"]["width"] == 64
     assert data["progress"] == 5
     assert data["stage"] == "queued"
+    assert data["request"]["continuity"]["enabled"] is True
 
 
 def test_invalid_sampler_is_rejected():
@@ -52,3 +53,24 @@ def test_invalid_sampler_is_rejected():
         json={"prompt": "test", "sampler": "invalid"},
     )
     assert response.status_code == 422
+
+
+def test_preflight_reports_continuity_and_native_shape_contract():
+    response = client.post(
+        "/v1/preflight",
+        json={
+            "prompt": "A cinematic character walking forward",
+            "continuity": {
+                "enabled": True,
+                "continuity_id": "demo-world",
+                "shot_index": 2,
+                "context": "Same wardrobe and location as shot 1",
+                "locked_elements": ["character", "wardrobe", "location"],
+            },
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert isinstance(data["warnings"], list)
+    assert data["errors"] == []

@@ -21,6 +21,7 @@
 - [x] Tiny CPU training profile for end-to-end native pipeline validation
 - [x] CI executes a tiny random-init training profile and preserves its checkpoint artifact
 - [x] CPU-first NOVA Micro profile (AE + latent diffusion)
+- [x] Reuse Micro checkpoints in CI instead of retraining the same profile twice
 - [x] Measure reconstruction quality on held-out synthetic clips
 
 ## Stage 1B — Data foundation
@@ -47,6 +48,7 @@
 - [x] Reproducible seed
 - [x] Validation loss / checkpoint metadata
 - [x] Sample generation through the trained autoencoder (tiny validation profile)
+- [x] Prompt-conditioning regression with same-seed prompt separation
 - [ ] Production-quality sample generation from a trained checkpoint
 - [x] Native tensor-to-MP4 export boundary
 

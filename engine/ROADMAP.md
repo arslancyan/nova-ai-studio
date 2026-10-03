@@ -17,7 +17,9 @@
 - [x] Best-checkpoint persistence and training metadata
 - [x] Autoencoder architecture smoke test
 - [ ] Train first synthetic reconstruction checkpoint (GPU quality run)
+- [ ] Benchmark first rights-safe real-video reconstruction checkpoint
 - [x] Tiny CPU training profile for end-to-end native pipeline validation
+- [x] CI executes a tiny random-init training profile and preserves its checkpoint artifact
 - [x] Measure reconstruction quality on held-out synthetic clips
 
 ## Stage 1B — Data foundation
@@ -28,6 +30,7 @@
 - [x] Caption metadata field
 - [x] Train/validation split
 - [x] Real-video autoencoder training entry point
+- [x] Real-video training resume/AMP path
 - [x] Dataset checksum manifest
 - [x] Real-video metadata/provenance validator
 - [x] End-to-end real-video preparation smoke test (CI-generated media)

@@ -38,6 +38,7 @@ def run():
         out=latent,
         history_out=Path("checkpoints/nova_micro_latent_history.jsonl"),
         model_dim=32,
+        text_dim=32,
         num_heads=4,
         num_layers=1,
         diffusion_steps=8,

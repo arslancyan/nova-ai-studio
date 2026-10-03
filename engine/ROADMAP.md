@@ -31,10 +31,10 @@
 - [x] Native latent denoiser architecture
 - [x] Latent diffusion training entry point
 - [x] Latent denoiser smoke test
-- [ ] Train first latent diffusion checkpoint
-- [ ] Loss curves
-- [ ] Reproducible seed
-- [ ] Evaluation report
+- [ ] Train first latent diffusion checkpoint (requires real compute)
+- [x] Loss curves
+- [x] Reproducible seed
+- [x] Validation loss / checkpoint metadata
 - [ ] Sample generation through the trained autoencoder
 
 ## Stage 3 — Improve the architecture

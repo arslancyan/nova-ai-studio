@@ -24,9 +24,22 @@ def read_metadata(path: Path):
         raise ValueError("Missing metadata columns: " + ", ".join(missing))
     return rows
 
+def video_duration(video_path: Path) -> float:
+    result = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+         "-of", "default=noprint_wrappers=1:nokey=1", str(video_path)],
+        check=True, stdout=subprocess.PIPE, text=True,
+    )
+    duration = float(result.stdout.strip())
+    if duration <= 0:
+        raise ValueError(f"{video_path}: invalid duration {duration}")
+    return duration
+
 def decode_frames(video_path: Path, frames: int, height: int, width: int):
+    duration = video_duration(video_path)
+    sample_fps = frames / duration
     vf = (
-        f"fps=1/{max(1, frames)},"
+        f"fps={sample_fps:.8f},"
         f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
         f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2"
     )
